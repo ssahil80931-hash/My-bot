@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
+print("SCRIPT STARTING...", flush=True)
+
 load_dotenv()
 
 MASTER_TOKEN = os.getenv("MASTER_TOKEN")
@@ -16,8 +18,12 @@ DB_FILE = "bot_database.db"
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+print(f"Loaded MASTER_TOKEN length: {len(MASTER_TOKEN) if MASTER_TOKEN else 0}", flush=True)
+print(f"Loaded SUPER_ADMIN_ID: {SUPER_ADMIN_ID}", flush=True)
+
 if not MASTER_TOKEN:
     logger.error("MASTER_TOKEN environment variable not set in Railway variables!")
+    print("CRITICAL ERROR: MASTER_TOKEN missing!", flush=True)
     exit(1)
 
 master_bot = telebot.TeleBot(MASTER_TOKEN, parse_mode='Markdown')
@@ -29,6 +35,7 @@ def get_db():
 
 def init_db():
     try:
+        print("Initializing SQLite Database...", flush=True)
         conn = get_db()
         cursor = conn.cursor()
         cursor.execute("""
@@ -115,8 +122,9 @@ def init_db():
         conn.commit()
         cursor.close()
         conn.close()
-        logger.info("SQLite Database tables initialized successfully!")
+        print("SQLite Database tables initialized successfully!", flush=True)
     except Exception as e:
+        print(f"Database initialization failed: {e}", flush=True)
         logger.error(f"Database initialization failed: {e}")
 
 def is_admin(user_id):
@@ -132,6 +140,7 @@ def is_admin(user_id):
 
 @master_bot.message_handler(commands=['start'])
 def master_start(message):
+    print(f"Received /start from user: {message.from_user.id}", flush=True)
     if not is_admin(message.from_user.id):
         master_bot.send_message(message.chat.id, "❌ *Unauthorized Access.*")
         return
@@ -484,12 +493,4 @@ def run_client_bot(token):
         conn.close()
 
         upi_id = upi_res['setting_value'] if upi_res else "merchant@upi"
-        qr_id = qr_res['setting_value'] if qr_res else ""
-
-        pay_text = f"💳 *PAYMENT REQUIRED*\n\n📦 Item: {category['name']}\n💰 Amount: ₹{category['price']}\n🆔 Order ID: `#{order_id}`\n\nUPI ID: `{upi_id}`\n\n👉 Please make payment and click below to upload screenshot:"
-
-        markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton("📸 Send Payment Screenshot", callback_data=f"pay_ss_{order_id}"))
-
-        if qr_id:
-            client_bot.se
+    
