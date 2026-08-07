@@ -8,8 +8,8 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 load_dotenv()
 
-MASTER_TOKEN = os.getenv("MASTER_BOT_TOKEN")
-SUPER_ADMIN_ID = int(os.getenv("SUPER_ADMIN_ID", 0))
+MASTER_TOKEN = "8892594189:AAGtMzvMCVqVdMkdwSY1R0Tu86rVCWlVXPc"
+SUPER_ADMIN_ID = 8999416691
 
 DB_HOST = os.getenv("DB_HOST", "mysql.railway.internal")
 DB_USER = os.getenv("DB_USER", "root")
@@ -32,13 +32,10 @@ def get_db():
         charset='utf8mb4'
     )
 
-# ==================== AUTOMATIC DATABASE INITIALIZATION ====================
 def init_db():
     try:
         conn = get_db()
         cursor = conn.cursor()
-        
-        # 1. Bots Table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS bots (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -48,7 +45,6 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        # 2. Admins Table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS admins (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -57,7 +53,6 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        # 3. Users Table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -69,7 +64,6 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        # 4. Products / Categories Table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS categories (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -82,7 +76,6 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        # 5. Category Videos Table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS category_videos (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -91,7 +84,6 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        # 6. Orders Table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS orders (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -105,7 +97,6 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        # 7. Channels Table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS channels (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -114,7 +105,6 @@ def init_db():
                 invite_link TEXT
             )
         """)
-        # 8. Settings Table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS settings (
                 setting_key VARCHAR(100) PRIMARY KEY,
@@ -145,7 +135,6 @@ def is_admin(user_id):
     conn.close()
     return res is not None
 
-# ==================== MASTER PANEL INTERFACE ====================
 @master_bot.message_handler(commands=['start'])
 def master_start(message):
     if not is_admin(message.from_user.id):
@@ -341,7 +330,6 @@ def execute_broadcast(message):
 
     master_bot.send_message(message.chat.id, f"📢 *Broadcast Completed!*\n\n✅ Sent: {success}\n❌ Failed: {failed}")
 
-# ==================== CLIENT BOT ARCHITECTURE & FLOW ====================
 def run_client_bot(token):
     client_bot = telebot.TeleBot(token, parse_mode='Markdown')
 
@@ -466,7 +454,6 @@ def run_client_bot(token):
 
     client_bot.infinity_polling(skip_pending=True)
 
-# ==================== MASTER ADMIN CALLBACK HANDLERS FOR APPROVAL ====================
 @master_bot.callback_query_handler(func=lambda call: call.data.startswith(('app_', 'rej_')))
 def handle_order_approval(call):
     if not is_admin(call.from_user.id):
@@ -492,4 +479,15 @@ def handle_order_approval(call):
         cursor.close()
         conn.close()
 
-        master_bot
+        master_bot.edit_message_caption(f"✅ *Order #{order_id} Approved Successfully!*", call.message.chat.id, call.message.message_id)
+        try:
+            master_bot.send_message(user_chat_id, f"🎉 *Payment Approved!*\n\nYour order `#{order_id}` has been verified successfully. Enjoy your premium access!")
+        except Exception:
+            pass
+    else:
+        cursor.execute("UPDATE orders SET status = 'rejected' WHERE order_id = %s", (order_id,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        master_bot.edit_message_caption(f"❌ 
