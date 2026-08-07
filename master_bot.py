@@ -9,7 +9,7 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 load_dotenv()
 
-MASTER_TOKEN = "8892594189:AAGtMzvMCVqVdMkdwSY1R0Tu86rVCWlVXPc"
+MASTER_TOKEN = "8892594189:AAGsTOApsTZ-UYTNQKv2cPRyAC29cyoRm2Y"
 SUPER_ADMIN_ID = 8999416691
 
 DB_HOST = os.getenv("DB_HOST", "mysql.railway.internal")
