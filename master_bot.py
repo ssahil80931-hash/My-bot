@@ -22,8 +22,14 @@ logger = logging.getLogger(__name__)
 master_bot = telebot.TeleBot(MASTER_TOKEN, parse_mode='Markdown')
 
 def get_db():
+    db_port = int(os.getenv("DB_PORT", 3306))
     return mysql.connector.connect(
-        host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, charset='utf8mb4'
+        host=DB_HOST, 
+        user=DB_USER, 
+        password=DB_PASSWORD, 
+        database=DB_NAME, 
+        port=db_port, 
+        charset='utf8mb4'
     )
 
 # ==================== AUTO DATABASE TABLES SETUP ====================
