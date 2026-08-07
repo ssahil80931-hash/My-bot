@@ -13,7 +13,7 @@ SUPER_ADMIN_ID = int(os.getenv("SUPER_ADMIN_ID", 0))
 
 DB_HOST = os.getenv("DB_HOST", "mysql.railway.internal")
 DB_USER = os.getenv("DB_USER", "root")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "bZSgxvOjdlpLNVrtooTHbIoLapgnVCLZ")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 DB_NAME = os.getenv("DB_NAME", "railway")
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 master_bot = telebot.TeleBot(MASTER_TOKEN, parse_mode='Markdown')
 
 def get_db():
-    db_port = int(os.getenv("DB_PORT", 3306))
+    db_port = int(os.getenv("DB_PORT") or os.getenv("MYSQLPORT") or 3306)
     return mysql.connector.connect(
         host=DB_HOST, 
         user=DB_USER, 
@@ -32,7 +32,7 @@ def get_db():
         charset='utf8mb4'
     )
 
-# ==================== AUTO DATABASE TABLES SETUP ====================
+# ==================== AUTOMATIC DATABASE INITIALIZATION ====================
 def init_db():
     try:
         conn = get_db()
@@ -65,17 +65,20 @@ def init_db():
                 bot_id INT,
                 first_name VARCHAR(255),
                 username VARCHAR(100),
+                is_blocked TINYINT DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        # 4. Categories Table
+        # 4. Products / Categories Table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS categories (
                 id INT AUTO_INCREMENT PRIMARY KEY,
-                bot_id INT,
+                bot_id INT DEFAULT 0,
                 name VARCHAR(255) NOT NULL,
                 price DECIMAL(10,2) NOT NULL,
                 days INT DEFAULT 30,
+                description TEXT,
+                is_active TINYINT DEFAULT 1,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -102,7 +105,16 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        # 7. Settings Table
+        # 7. Channels Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS channels (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                channel_id VARCHAR(100) UNIQUE NOT NULL,
+                channel_name VARCHAR(255),
+                invite_link TEXT
+            )
+        """)
+        # 8. Settings Table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS settings (
                 setting_key VARCHAR(100) PRIMARY KEY,
@@ -113,7 +125,7 @@ def init_db():
             INSERT IGNORE INTO settings (setting_key, setting_value) VALUES 
             ('upi_id', 'merchant@upi'),
             ('qr_file_id', ''),
-            ('start_caption', 'Welcome! Choose a category below:')
+            ('start_caption', '✨ *Welcome to Premium Store* ✨\n\nChoose a category below to explore:')
         """)
         conn.commit()
         cursor.close()
@@ -133,23 +145,25 @@ def is_admin(user_id):
     conn.close()
     return res is not None
 
-# ==================== MASTER PANEL ====================
+# ==================== MASTER PANEL INTERFACE ====================
 @master_bot.message_handler(commands=['start'])
 def master_start(message):
     if not is_admin(message.from_user.id):
-        master_bot.send_message(message.chat.id, "❌ Unauthorized Access.")
+        master_bot.send_message(message.chat.id, "❌ *Unauthorized Access.*")
         return
     
     markup = InlineKeyboardMarkup(row_width=2)
     markup.add(
-        InlineKeyboardButton("➕ Add New Bot", callback_data="m_add_bot"),
-        InlineKeyboardButton("🤖 Manage Bots", callback_data="m_list_bots"),
-        InlineKeyboardButton("📦 Add Category & Videos", callback_data="m_add_cat"),
+        InlineKeyboardButton("🤖 Add New Bot", callback_data="m_add_bot"),
+        InlineKeyboardButton("📋 Manage Bots", callback_data="m_list_bots"),
+        InlineKeyboardButton("📦 Add/Manage Products", callback_data="m_products"),
         InlineKeyboardButton("💳 Payment Settings", callback_data="m_payment"),
-        InlineKeyboardButton("📊 Earnings & Analytics", callback_data="m_analytics"),
-        InlineKeyboardButton("📢 Broadcast", callback_data="m_broadcast")
+        InlineKeyboardButton("📊 Analytics & Stats", callback_data="m_analytics"),
+        InlineKeyboardButton("📢 Broadcast", callback_data="m_broadcast"),
+        InlineKeyboardButton("👥 User Management", callback_data="m_users"),
+        InlineKeyboardButton("⚙️ General Settings", callback_data="m_settings")
     )
-    master_bot.send_message(message.chat.id, "👑 *MASTER CONTROL PANEL*\n\nManage your bots, categories, videos, and payments seamlessly:", reply_markup=markup)
+    master_bot.send_message(message.chat.id, "👑 *MASTER CONTROL PANEL*\n\nSelect an option below to manage your system seamlessly:", reply_markup=markup)
 
 @master_bot.callback_query_handler(func=lambda call: call.data.startswith('m_'))
 def master_callbacks(call):
@@ -160,8 +174,9 @@ def master_callbacks(call):
     chat_id = call.message.chat.id
 
     if action == 'add_bot':
-        msg = master_bot.send_message(chat_id, "🤖 Send the new Bot Token from @BotFather:")
+        msg = master_bot.send_message(chat_id, "🤖 *Send the new Bot Token from @BotFather:*")
         master_bot.register_next_step_handler(msg, save_new_bot)
+        
     elif action == 'list_bots':
         conn = get_db()
         cursor = conn.cursor(dictionary=True)
@@ -171,13 +186,89 @@ def master_callbacks(call):
         conn.close()
 
         text = "🤖 *Active Connected Bots:*\n\n"
+        if not bots:
+            text += "No bots added yet."
         for b in bots:
-            text += f"• `{b['bot_username']}` (Token: `{b['bot_token'][:10]}...`)\n"
-        master_bot.edit_message_text(text, chat_id, call.message.message_id)
+            status = "🟢 Active" if b['is_active'] else "🔴 Inactive"
+            text += f"• `@{b['bot_username']}` | Status: {status}\n  Token: `{b['bot_token'][:10]}...`\n\n"
+        
+        markup = InlineKeyboardMarkup()
+        markup.add(InlineKeyboardButton("🔙 Back to Menu", callback_data="m_main_menu"))
+        master_bot.edit_message_text(text, chat_id, call.message.message_id, reply_markup=markup)
+
+    elif action == 'products':
+        conn = get_db()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM categories")
+        prods = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        text = "📦 *Product Management:*\n\n"
+        for p in prods:
+            text += f"🆔 ID: {p['id']} | *{p['name']}* - ₹{p['price']} ({p['days']} Days)\n"
+        
+        markup = InlineKeyboardMarkup(row_width=1)
+        markup.add(
+            InlineKeyboardButton("➕ Add New Product", callback_data="m_add_prod"),
+            InlineKeyboardButton("🔙 Back to Menu", callback_data="m_main_menu")
+        )
+        master_bot.edit_message_text(text, chat_id, call.message.message_id, reply_markup=markup)
+
+    elif action == 'add_prod':
+        msg = master_bot.send_message(chat_id, "📦 *Enter Product Details in format:*\n`Name | Price | Days | Description`")
+        master_bot.register_next_step_handler(msg, save_new_product)
 
     elif action == 'payment':
-        msg = master_bot.send_message(chat_id, "💳 Send new UPI ID:")
+        msg = master_bot.send_message(chat_id, "💳 *Send new UPI ID:*")
         master_bot.register_next_step_handler(msg, save_upi_setting)
+
+    elif action == 'analytics':
+        conn = get_db()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT COUNT(*) as cnt FROM users")
+        total_users = cursor.fetchone()['cnt']
+        cursor.execute("SELECT COUNT(*) as cnt FROM orders")
+        total_orders = cursor.fetchone()['cnt']
+        cursor.execute("SELECT SUM(amount) as rev FROM orders WHERE status='approved'")
+        total_rev = cursor.fetchone()['rev'] or 0
+        cursor.close()
+        conn.close()
+
+        text = f"📊 *Earnings & Analytics Summary*\n\n" \
+               f"👥 Total Users: `{total_users}`\n" \
+               f"📦 Total Orders: `{total_orders}`\n" \
+               f"💰 Total Revenue: `₹{total_rev}`"
+        
+        markup = InlineKeyboardMarkup()
+        markup.add(InlineKeyboardButton("🔙 Back to Menu", callback_data="m_main_menu"))
+        master_bot.edit_message_text(text, chat_id, call.message.message_id, reply_markup=markup)
+
+    elif action == 'broadcast':
+        msg = master_bot.send_message(chat_id, "📢 *Send the broadcast message (Text, Photo, or Video with caption):*")
+        master_bot.register_next_step_handler(msg, execute_broadcast)
+
+    elif action == 'users':
+        conn = get_db()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT COUNT(*) as cnt FROM users")
+        count = cursor.fetchone()['cnt']
+        cursor.close()
+        conn.close()
+
+        text = f"👥 *User Management*\n\nTotal Registered Users across bots: `{count}`"
+        markup = InlineKeyboardMarkup()
+        markup.add(InlineKeyboardButton("🔙 Back to Menu", callback_data="m_main_menu"))
+        master_bot.edit_message_text(text, chat_id, call.message.message_id, reply_markup=markup)
+
+    elif action == 'settings':
+        text = "⚙️ *General System Settings*\nConfigure system parameters via database values."
+        markup = InlineKeyboardMarkup()
+        markup.add(InlineKeyboardButton("🔙 Back to Menu", callback_data="m_main_menu"))
+        master_bot.edit_message_text(text, chat_id, call.message.message_id, reply_markup=markup)
+
+    elif action == 'main_menu':
+        master_start(call.message)
 
 def save_new_bot(message):
     token = message.text.strip()
@@ -193,10 +284,29 @@ def save_new_bot(message):
         cursor.close()
         conn.close()
 
-        master_bot.send_message(message.chat.id, f"✅ Bot `@{bot_username}` successfully added and started!")
+        master_bot.send_message(message.chat.id, f"✅ *Bot `@{bot_username}` successfully added and started!*")
         threading.Thread(target=run_client_bot, args=(token,)).start()
     except Exception as e:
-        master_bot.send_message(message.chat.id, f"❌ Failed to add bot: {e}")
+        master_bot.send_message(message.chat.id, f"❌ *Failed to add bot:* `{e}`")
+
+def save_new_product(message):
+    try:
+        parts = message.text.split('|')
+        name = parts[0].strip()
+        price = float(parts[1].strip())
+        days = int(parts[2].strip())
+        desc = parts[3].strip() if len(parts) > 3 else ""
+
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO categories (name, price, days, description) VALUES (%s, %s, %s, %s)", (name, price, days, desc))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        master_bot.send_message(message.chat.id, f"✅ *Product '{name}' added successfully!*")
+    except Exception as e:
+        master_bot.send_message(message.chat.id, f"❌ *Invalid format or error:* `{e}`")
 
 def save_upi_setting(message):
     upi = message.text.strip()
@@ -206,10 +316,32 @@ def save_upi_setting(message):
     conn.commit()
     cursor.close()
     conn.close()
-    master_bot.send_message(message.chat.id, f"✅ UPI ID updated to: `{upi}`")
+    master_bot.send_message(message.chat.id, f"✅ *UPI ID updated to:* `{upi}`")
 
+def execute_broadcast(message):
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT chat_id FROM users WHERE is_blocked = 0")
+    users = cursor.fetchall()
+    cursor.close()
+    conn.close()
 
-# ==================== CLIENT BOT RUNNER & LOGIC ====================
+    success, failed = 0, 0
+    for u in users:
+        try:
+            if message.content_type == 'text':
+                master_bot.send_message(u['chat_id'], message.text, parse_mode='Markdown')
+            elif message.content_type == 'photo':
+                master_bot.send_photo(u['chat_id'], message.photo[-1].file_id, caption=message.caption, parse_mode='Markdown')
+            elif message.content_type == 'video':
+                master_bot.send_video(u['chat_id'], message.video.file_id, caption=message.caption, parse_mode='Markdown')
+            success += 1
+        except Exception:
+            failed += 1
+
+    master_bot.send_message(message.chat.id, f"📢 *Broadcast Completed!*\n\n✅ Sent: {success}\n❌ Failed: {failed}")
+
+# ==================== CLIENT BOT ARCHITECTURE & FLOW ====================
 def run_client_bot(token):
     client_bot = telebot.TeleBot(token, parse_mode='Markdown')
 
@@ -223,19 +355,19 @@ def run_client_bot(token):
                        (chat_id, message.from_user.first_name, message.from_user.username, message.from_user.first_name))
         conn.commit()
 
-        cursor.execute("SELECT * FROM categories")
+        cursor.execute("SELECT * FROM categories WHERE is_active = 1")
         categories = cursor.fetchall()
         
         cursor.execute("SELECT setting_value FROM settings WHERE setting_key='start_caption'")
         cap_res = cursor.fetchone()
-        caption = cap_res['setting_value'] if cap_res else "Welcome! Choose a category below:"
+        caption = cap_res['setting_value'] if cap_res else "✨ *Welcome to Store* ✨\n\nChoose a category below:"
         
         cursor.close()
         conn.close()
 
         markup = InlineKeyboardMarkup(row_width=1)
         for cat in categories:
-            markup.add(InlineKeyboardButton(f"📂 {cat['name']} - ₹{cat['price']}", callback_data=f"cat_{cat['id']}"))
+            markup.add(InlineKeyboardButton(f"🛒 {cat['name']} - ₹{cat['price']}", callback_data=f"cat_{cat['id']}"))
 
         client_bot.send_message(chat_id, caption, reply_markup=markup)
 
@@ -260,10 +392,11 @@ def run_client_bot(token):
         conn.close()
 
         if not category:
-            client_bot.answer_callback_query(call.id, "Category not found!")
+            client_bot.answer_callback_query(call.id, "❌ Category not found!")
             return
 
-        client_bot.send_message(chat_id, f"🎬 Here are your videos for *{category['name']}*:")
+        client_bot.send_message(chat_id, f"📂 *Product:* {category['name']}\n💰 *Price:* ₹{category['price']}\n⏳ *Validity:* {category['days']} Days\n\n📝 {category['description']}")
+        
         for v in videos:
             try:
                 client_bot.send_video(chat_id, v['video_file_id'])
@@ -282,12 +415,12 @@ def run_client_bot(token):
         upi_id = upi_res['setting_value'] if upi_res else "merchant@upi"
         qr_id = qr_res['setting_value'] if qr_res else ""
 
-        pay_text = f"💳 *Payment Required*\n\n" \
-                   f"📦 Category: {category['name']}\n" \
-                   f"💰 Price: ₹{category['price']}\n" \
+        pay_text = f"💳 *PAYMENT REQUIRED*\n\n" \
+                   f"📦 Item: {category['name']}\n" \
+                   f"💰 Amount: ₹{category['price']}\n" \
                    f"🆔 Order ID: `#{order_id}`\n\n" \
                    f"UPI ID: `{upi_id}`\n\n" \
-                   f"Please pay and send screenshot below:"
+                   f"👉 Please make payment and click below to upload screenshot:"
 
         markup = InlineKeyboardMarkup()
         markup.add(InlineKeyboardButton("📸 Send Payment Screenshot", callback_data=f"pay_ss_{order_id}"))
@@ -300,13 +433,13 @@ def run_client_bot(token):
     @client_bot.callback_query_handler(func=lambda call: call.data.startswith('pay_ss_'))
     def ask_for_screenshot(call):
         order_id = call.data.split('_')[2]
-        msg = client_bot.send_message(call.message.chat.id, f"📸 Send payment screenshot for Order `#{order_id}` now:")
+        msg = client_bot.send_message(call.message.chat.id, f"📸 *Send payment screenshot photo for Order `#{order_id}` now:*")
         client_bot.register_next_step_handler(msg, receive_screenshot, order_id)
 
     def receive_screenshot(message, order_id):
         chat_id = message.chat.id
         if not message.photo:
-            client_bot.send_message(chat_id, "❌ Please send a valid photo screenshot.")
+            client_bot.send_message(chat_id, "❌ *Please send a valid photo screenshot.*")
             return
 
         file_id = message.photo[-1].file_id
@@ -320,10 +453,10 @@ def run_client_bot(token):
         cursor.close()
         conn.close()
 
-        client_bot.send_message(chat_id, "✅ Screenshot received! Admin will verify soon.")
+        client_bot.send_message(chat_id, "✅ *Screenshot received successfully! Admin will verify and approve soon.*")
 
         if SUPER_ADMIN_ID:
-            admin_txt = f"🔔 *New Payment Proof!*\n\nOrder: `#{order_id}`\nUser: `{chat_id}`\nCategory: {order['name']}\nAmount: ₹{order['amount']}"
+            admin_txt = f"🔔 *NEW PAYMENT PROOF!*\n\nOrder: `#{order_id}`\nUser: `{chat_id}`\nProduct: {order['name']}\nAmount: ₹{order['amount']}"
             markup = InlineKeyboardMarkup()
             markup.add(
                 InlineKeyboardButton("✅ Approve", callback_data=f"app_{order_id}"),
@@ -333,23 +466,24 @@ def run_client_bot(token):
 
     client_bot.infinity_polling(skip_pending=True)
 
-def load_all_bots():
-    try:
-        conn = get_db()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT bot_token FROM bots WHERE is_active = 1")
-        bots = cursor.fetchall()
+# ==================== MASTER ADMIN CALLBACK HANDLERS FOR APPROVAL ====================
+@master_bot.callback_query_handler(func=lambda call: call.data.startswith(('app_', 'rej_')))
+def handle_order_approval(call):
+    if not is_admin(call.from_user.id):
+        return
+
+    action, order_id = call.data.split('_', 1)
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT o.*, b.bot_token FROM orders o JOIN categories c ON o.category_id = c.id JOIN bots b ON c.bot_id = b.id WHERE o.order_id = %s", (order_id,))
+    # Fallback if specific bot mapping isn't tied directly
+    cursor.execute("SELECT * FROM orders WHERE order_id = %s", (order_id,))
+    order = cursor.fetchone()
+    
+    if not order:
         cursor.close()
         conn.close()
+        master_bot.answer_callback_query(call.id, "❌ Order not found!")
+        return
 
-        for b in bots:
-            threading.Thread(target=run_client_bot, args=(b['bot_token'],)).start()
-    except Exception as e:
-        logger.error(f"Error loading bots: {e}")
-
-if __name__ == '__main__':
-    init_db()  # Automatically creates tables on startup
-    load_all_bots()
-    logger.info("Master Control Bot is running...")
-    master_bot.infinity_polling(skip_pending=True)
-        
+    user_chat_id = or
