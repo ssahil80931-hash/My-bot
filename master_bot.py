@@ -475,8 +475,6 @@ def handle_order_approval(call):
     action, order_id = call.data.split('_', 1)
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT o.*, b.bot_token FROM orders o JOIN categories c ON o.category_id = c.id JOIN bots b ON c.bot_id = b.id WHERE o.order_id = %s", (order_id,))
-    # Fallback if specific bot mapping isn't tied directly
     cursor.execute("SELECT * FROM orders WHERE order_id = %s", (order_id,))
     order = cursor.fetchone()
     
@@ -486,4 +484,12 @@ def handle_order_approval(call):
         master_bot.answer_callback_query(call.id, "❌ Order not found!")
         return
 
-    user_chat_id = or
+    user_chat_id = order['user_chat_id']
+
+    if action == 'app':
+        cursor.execute("UPDATE orders SET status = 'approved' WHERE order_id = %s", (order_id,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        master_bot
