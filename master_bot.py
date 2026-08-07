@@ -1,8 +1,7 @@
 import os
 import logging
 import threading
-import datetime
-import mysql.connector
+import sqlite3
 from dotenv import load_dotenv
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
@@ -12,30 +11,21 @@ load_dotenv()
 MASTER_TOKEN = os.getenv("MASTER_TOKEN")
 SUPER_ADMIN_ID = int(os.getenv("SUPER_ADMIN_ID") or "0")
 
-DB_HOST = os.getenv("DB_HOST", "mysql.railway.internal")
-DB_USER = os.getenv("DB_USER", "root")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "")
-DB_NAME = os.getenv("DB_NAME", "railway")
+DB_FILE = "bot_database.db"
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 if not MASTER_TOKEN:
-    logger.error("MASTER_TOKEN environment variable not set!")
+    logger.error("MASTER_TOKEN environment variable not set in Railway variables!")
     exit(1)
 
 master_bot = telebot.TeleBot(MASTER_TOKEN, parse_mode='Markdown')
 
 def get_db():
-    db_port = int(os.getenv("DB_PORT") or os.getenv("MYSQLPORT") or 3306)
-    return mysql.connector.connect(
-        host=DB_HOST, 
-        user=DB_USER, 
-        password=DB_PASSWORD, 
-        database=DB_NAME, 
-        port=db_port, 
-        charset='utf8mb4'
-    )
+    conn = sqlite3.connect(DB_FILE, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 def init_db():
     try:
@@ -43,81 +33,81 @@ def init_db():
         cursor = conn.cursor()
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS bots (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                bot_token VARCHAR(255) UNIQUE NOT NULL,
-                bot_username VARCHAR(100),
-                is_active TINYINT DEFAULT 1,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                bot_token TEXT UNIQUE NOT NULL,
+                bot_username TEXT,
+                is_active INTEGER DEFAULT 1,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS admins (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                user_id BIGINT UNIQUE NOT NULL,
-                username VARCHAR(100),
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER UNIQUE NOT NULL,
+                username TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                chat_id BIGINT UNIQUE NOT NULL,
-                bot_id INT,
-                first_name VARCHAR(255),
-                username VARCHAR(100),
-                is_blocked TINYINT DEFAULT 0,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                chat_id INTEGER UNIQUE NOT NULL,
+                bot_id INTEGER,
+                first_name TEXT,
+                username TEXT,
+                is_blocked INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS categories (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                bot_id INT DEFAULT 0,
-                name VARCHAR(255) NOT NULL,
-                price DECIMAL(10,2) NOT NULL,
-                days INT DEFAULT 30,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                bot_id INTEGER DEFAULT 0,
+                name TEXT NOT NULL,
+                price REAL NOT NULL,
+                days INTEGER DEFAULT 30,
                 description TEXT,
-                is_active TINYINT DEFAULT 1,
+                is_active INTEGER DEFAULT 1,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS category_videos (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                category_id INT NOT NULL,
-                video_file_id VARCHAR(255) NOT NULL,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                category_id INTEGER NOT NULL,
+                video_file_id TEXT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS orders (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                order_id VARCHAR(50) UNIQUE NOT NULL,
-                user_chat_id BIGINT NOT NULL,
-                category_id INT NOT NULL,
-                amount DECIMAL(10,2) NOT NULL,
-                status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
-                screenshot_file_id VARCHAR(255),
-                admin_message_id BIGINT,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                order_id TEXT UNIQUE NOT NULL,
+                user_chat_id INTEGER NOT NULL,
+                category_id INTEGER NOT NULL,
+                amount REAL NOT NULL,
+                status TEXT DEFAULT 'pending',
+                screenshot_file_id TEXT,
+                admin_message_id INTEGER,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS channels (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                channel_id VARCHAR(100) UNIQUE NOT NULL,
-                channel_name VARCHAR(255),
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                channel_id TEXT UNIQUE NOT NULL,
+                channel_name TEXT,
                 invite_link TEXT
             )
         """)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS settings (
-                setting_key VARCHAR(100) PRIMARY KEY,
+                setting_key TEXT PRIMARY KEY,
                 setting_value TEXT
             )
         """)
         cursor.execute("""
-            INSERT IGNORE INTO settings (setting_key, setting_value) VALUES 
+            INSERT OR IGNORE INTO settings (setting_key, setting_value) VALUES 
             ('upi_id', 'merchant@upi'),
             ('qr_file_id', ''),
             ('start_caption', '✨ *Welcome to Premium Store* ✨\n\nChoose a category below to explore:')
@@ -125,7 +115,7 @@ def init_db():
         conn.commit()
         cursor.close()
         conn.close()
-        logger.info("Database tables initialized successfully!")
+        logger.info("SQLite Database tables initialized successfully!")
     except Exception as e:
         logger.error(f"Database initialization failed: {e}")
 
@@ -133,8 +123,8 @@ def is_admin(user_id):
     if SUPER_ADMIN_ID and user_id == SUPER_ADMIN_ID:
         return True
     conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM admins WHERE user_id = %s", (user_id,))
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM admins WHERE user_id = ?", (user_id,))
     res = cursor.fetchone()
     cursor.close()
     conn.close()
@@ -196,7 +186,7 @@ def master_callbacks(call):
         
     elif action == 'list_bots':
         conn = get_db()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor()
         cursor.execute("SELECT * FROM bots")
         bots = cursor.fetchall()
         cursor.close()
@@ -215,7 +205,7 @@ def master_callbacks(call):
 
     elif action == 'products':
         conn = get_db()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor()
         cursor.execute("SELECT * FROM categories")
         prods = cursor.fetchall()
         cursor.close()
@@ -238,7 +228,7 @@ def master_callbacks(call):
 
     elif action == 'channels':
         conn = get_db()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor()
         cursor.execute("SELECT * FROM channels")
         channels = cursor.fetchall()
         cursor.close()
@@ -267,7 +257,7 @@ def master_callbacks(call):
 
     elif action == 'analytics':
         conn = get_db()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor()
         cursor.execute("SELECT COUNT(*) as cnt FROM users")
         total_users = cursor.fetchone()['cnt']
         cursor.execute("SELECT COUNT(*) as cnt FROM orders")
@@ -278,16 +268,17 @@ def master_callbacks(call):
         approved_orders = cursor.fetchone()['cnt']
         cursor.execute("SELECT COUNT(*) as cnt FROM orders WHERE status='rejected'")
         rejected_orders = cursor.fetchone()['cnt']
+        
         cursor.execute("SELECT SUM(amount) as rev FROM orders WHERE status='approved'")
         total_rev = cursor.fetchone()['rev'] or 0
         
-        cursor.execute("SELECT SUM(amount) as rev FROM orders WHERE status='approved' AND DATE(created_at) = CURDATE()")
+        cursor.execute("SELECT SUM(amount) as rev FROM orders WHERE status='approved' AND date(created_at) = date('now')")
         today_rev = cursor.fetchone()['rev'] or 0
 
-        cursor.execute("SELECT SUM(amount) as rev FROM orders WHERE status='approved' AND created_at >= NOW() - INTERVAL 7 DAY")
+        cursor.execute("SELECT SUM(amount) as rev FROM orders WHERE status='approved' AND created_at >= datetime('now', '-7 days')")
         week_rev = cursor.fetchone()['rev'] or 0
 
-        cursor.execute("SELECT SUM(amount) as rev FROM orders WHERE status='approved' AND created_at >= NOW() - INTERVAL 30 DAY")
+        cursor.execute("SELECT SUM(amount) as rev FROM orders WHERE status='approved' AND created_at >= datetime('now', '-30 days')")
         month_rev = cursor.fetchone()['rev'] or 0
 
         cursor.close()
@@ -311,7 +302,7 @@ def master_callbacks(call):
 
     elif action == 'users':
         conn = get_db()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor()
         cursor.execute("SELECT COUNT(*) as cnt FROM users")
         count = cursor.fetchone()['cnt']
         cursor.close()
@@ -340,7 +331,7 @@ def save_new_bot(message):
 
         conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO bots (bot_token, bot_username) VALUES (%s, %s)", (token, bot_username))
+        cursor.execute("INSERT INTO bots (bot_token, bot_username) VALUES (?, ?)", (token, bot_username))
         conn.commit()
         cursor.close()
         conn.close()
@@ -360,7 +351,7 @@ def save_new_product(message):
 
         conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO categories (name, price, days, description) VALUES (%s, %s, %s, %s)", (name, price, days, desc))
+        cursor.execute("INSERT INTO categories (name, price, days, description) VALUES (?, ?, ?, ?)", (name, price, days, desc))
         conn.commit()
         cursor.close()
         conn.close()
@@ -378,7 +369,7 @@ def save_new_channel(message):
 
         conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO channels (channel_id, channel_name, invite_link) VALUES (%s, %s, %s)", (chan_id, chan_name, invite))
+        cursor.execute("INSERT INTO channels (channel_id, channel_name, invite_link) VALUES (?, ?, ?)", (chan_id, chan_name, invite))
         conn.commit()
         cursor.close()
         conn.close()
@@ -391,7 +382,7 @@ def save_upi_setting(message):
     upi = message.text.strip()
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO settings (setting_key, setting_value) VALUES ('upi_id', %s) ON DUPLICATE KEY UPDATE setting_value=%s", (upi, upi))
+    cursor.execute("INSERT OR REPLACE INTO settings (setting_key, setting_value) VALUES ('upi_id', ?)", (upi,))
     conn.commit()
     cursor.close()
     conn.close()
@@ -399,7 +390,7 @@ def save_upi_setting(message):
 
 def execute_broadcast(message):
     conn = get_db()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()
     cursor.execute("SELECT chat_id FROM users WHERE is_blocked = 0")
     users = cursor.fetchall()
     cursor.close()
@@ -427,10 +418,12 @@ def run_client_bot(token):
     def client_start(message):
         chat_id = message.chat.id
         conn = get_db()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor()
         
-        cursor.execute("INSERT INTO users (chat_id, first_name, username) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE first_name=%s", 
-                       (chat_id, message.from_user.first_name, message.from_user.username, message.from_user.first_name))
+        cursor.execute("""
+            INSERT INTO users (chat_id, first_name, username) VALUES (?, ?, ?)
+            ON CONFLICT(chat_id) DO UPDATE SET first_name = excluded.first_name, username = excluded.username
+        """, (chat_id, message.from_user.first_name, message.from_user.username))
         conn.commit()
 
         cursor.execute("SELECT * FROM categories WHERE is_active = 1")
@@ -455,11 +448,11 @@ def run_client_bot(token):
         cat_id = call.data.split('_')[1]
 
         conn = get_db()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM categories WHERE id = %s", (cat_id,))
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM categories WHERE id = ?", (cat_id,))
         category = cursor.fetchone()
 
-        cursor.execute("SELECT video_file_id FROM category_videos WHERE category_id = %s", (cat_id,))
+        cursor.execute("SELECT video_file_id FROM category_videos WHERE category_id = ?", (cat_id,))
         videos = cursor.fetchall()
 
         cursor.execute("SELECT setting_value FROM settings WHERE setting_key='upi_id'")
@@ -484,10 +477,19 @@ def run_client_bot(token):
         order_id = f"ORD{call.message.date}"
         conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO orders (order_id, user_chat_id, category_id, amount, status) VALUES (%s, %s, %s, %s, 'pending')",
+        cursor.execute("INSERT INTO orders (order_id, user_chat_id, category_id, amount, status) VALUES (?, ?, ?, ?, 'pending')",
                        (order_id, chat_id, cat_id, category['price']))
         conn.commit()
         cursor.close()
         conn.close()
 
-        upi_id
+        upi_id = upi_res['setting_value'] if upi_res else "merchant@upi"
+        qr_id = qr_res['setting_value'] if qr_res else ""
+
+        pay_text = f"💳 *PAYMENT REQUIRED*\n\n📦 Item: {category['name']}\n💰 Amount: ₹{category['price']}\n🆔 Order ID: `#{order_id}`\n\nUPI ID: `{upi_id}`\n\n👉 Please make payment and click below to upload screenshot:"
+
+        markup = InlineKeyboardMarkup()
+        markup.add(InlineKeyboardButton("📸 Send Payment Screenshot", callback_data=f"pay_ss_{order_id}"))
+
+        if qr_id:
+            client_bot.se
