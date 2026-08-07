@@ -8,7 +8,7 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 load_dotenv()
 
-MASTER_TOKEN = os.getenv("8892594189:AAFXnHg7gLw3izYwwb8XzgRqYv-KS2r_6bw")
+MASTER_TOKEN = os.getenv("8892594189:AAEwvSZsssjcK_xJhS8CgpfVwJEgUp11NYc-KS2r_6bw")
 SUPER_ADMIN_ID = int(os.getenv("8999416691", 0))
 
 DB_HOST = os.getenv("DB_HOST", "localhost")
