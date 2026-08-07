@@ -9,8 +9,8 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 load_dotenv()
 
-MASTER_TOKEN = "8892594189:AAGsTOApsTZ-UYTNQKv2cPRyAC29cyoRm2Y"
-SUPER_ADMIN_ID = 8999416691
+MASTER_TOKEN = os.getenv("MASTER_TOKEN")
+SUPER_ADMIN_ID = int(os.getenv("SUPER_ADMIN_ID") or "0")
 
 DB_HOST = os.getenv("DB_HOST", "mysql.railway.internal")
 DB_USER = os.getenv("DB_USER", "root")
@@ -19,6 +19,10 @@ DB_NAME = os.getenv("DB_NAME", "railway")
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+if not MASTER_TOKEN:
+    logger.error("MASTER_TOKEN environment variable not set!")
+    exit(1)
 
 master_bot = telebot.TeleBot(MASTER_TOKEN, parse_mode='Markdown')
 
@@ -126,7 +130,7 @@ def init_db():
         logger.error(f"Database initialization failed: {e}")
 
 def is_admin(user_id):
-    if user_id == SUPER_ADMIN_ID:
+    if SUPER_ADMIN_ID and user_id == SUPER_ADMIN_ID:
         return True
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
@@ -486,7 +490,4 @@ def run_client_bot(token):
         cursor.close()
         conn.close()
 
-        upi_id = upi_res['setting_value'] if upi_res else "merchant@upi"
-        qr_id = qr_res['setting_value'] if qr_res else ""
-
-    
+        upi_id
