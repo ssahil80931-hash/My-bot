@@ -1,6 +1,7 @@
 import os
 import logging
 import threading
+import datetime
 import mysql.connector
 from dotenv import load_dotenv
 import telebot
@@ -145,14 +146,37 @@ def master_start(message):
     markup.add(
         InlineKeyboardButton("🤖 Add New Bot", callback_data="m_add_bot"),
         InlineKeyboardButton("📋 Manage Bots", callback_data="m_list_bots"),
-        InlineKeyboardButton("📦 Add/Manage Products", callback_data="m_products"),
+        InlineKeyboardButton("📦 Products", callback_data="m_products"),
+        InlineKeyboardButton("📢 Channels", callback_data="m_channels"),
         InlineKeyboardButton("💳 Payment Settings", callback_data="m_payment"),
-        InlineKeyboardButton("📊 Analytics & Stats", callback_data="m_analytics"),
+        InlineKeyboardButton("📊 Stats & Revenue", callback_data="m_analytics"),
         InlineKeyboardButton("📢 Broadcast", callback_data="m_broadcast"),
-        InlineKeyboardButton("👥 User Management", callback_data="m_users"),
-        InlineKeyboardButton("⚙️ General Settings", callback_data="m_settings")
+        InlineKeyboardButton("👥 Users", callback_data="m_users"),
+        InlineKeyboardButton("⚙️ Settings", callback_data="m_settings")
     )
     master_bot.send_message(message.chat.id, "👑 *MASTER CONTROL PANEL*\n\nSelect an option below to manage your system seamlessly:", reply_markup=markup)
+
+@master_bot.message_handler(commands=['getids'])
+def get_file_ids(message):
+    if not is_admin(message.from_user.id):
+        return
+    if message.reply_to_message:
+        msg = message.reply_to_message
+        file_id = ""
+        media_type = "Text"
+        if msg.photo:
+            file_id = msg.photo[-1].file_id
+            media_type = "Photo"
+        elif msg.video:
+            file_id = msg.video.file_id
+            media_type = "Video"
+        elif msg.document:
+            file_id = msg.document.file_id
+            media_type = "Document"
+        
+        master_bot.send_message(message.chat.id, f"📋 *Media File ID ({media_type}):*\n`{file_id}`")
+    else:
+        master_bot.send_message(message.chat.id, "ℹ️ *Reply to any Photo or Video with `/getids` to get its File ID.*")
 
 @master_bot.callback_query_handler(func=lambda call: call.data.startswith('m_'))
 def master_callbacks(call):
@@ -208,6 +232,31 @@ def master_callbacks(call):
         msg = master_bot.send_message(chat_id, "📦 *Enter Product Details in format:*\n`Name | Price | Days | Description`")
         master_bot.register_next_step_handler(msg, save_new_product)
 
+    elif action == 'channels':
+        conn = get_db()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM channels")
+        channels = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        text = "📢 *Channel/Group Management:*\n\n"
+        if not channels:
+            text += "No channels added yet."
+        for c in channels:
+            text += f"• *{c['channel_name']}* (`{c['channel_id']}`)\n"
+        
+        markup = InlineKeyboardMarkup(row_width=1)
+        markup.add(
+            InlineKeyboardButton("➕ Add Channel", callback_data="m_add_chan"),
+            InlineKeyboardButton("🔙 Back to Menu", callback_data="m_main_menu")
+        )
+        master_bot.edit_message_text(text, chat_id, call.message.message_id, reply_markup=markup)
+
+    elif action == 'add_chan':
+        msg = master_bot.send_message(chat_id, "📢 *Enter Channel Details in format:*\n`ChannelID | ChannelName | InviteLink`")
+        master_bot.register_next_step_handler(msg, save_new_channel)
+
     elif action == 'payment':
         msg = master_bot.send_message(chat_id, "💳 *Send new UPI ID:*")
         master_bot.register_next_step_handler(msg, save_upi_setting)
@@ -219,15 +268,34 @@ def master_callbacks(call):
         total_users = cursor.fetchone()['cnt']
         cursor.execute("SELECT COUNT(*) as cnt FROM orders")
         total_orders = cursor.fetchone()['cnt']
+        cursor.execute("SELECT COUNT(*) as cnt FROM orders WHERE status='pending'")
+        pending_orders = cursor.fetchone()['cnt']
+        cursor.execute("SELECT COUNT(*) as cnt FROM orders WHERE status='approved'")
+        approved_orders = cursor.fetchone()['cnt']
+        cursor.execute("SELECT COUNT(*) as cnt FROM orders WHERE status='rejected'")
+        rejected_orders = cursor.fetchone()['cnt']
         cursor.execute("SELECT SUM(amount) as rev FROM orders WHERE status='approved'")
         total_rev = cursor.fetchone()['rev'] or 0
+        
+        cursor.execute("SELECT SUM(amount) as rev FROM orders WHERE status='approved' AND DATE(created_at) = CURDATE()")
+        today_rev = cursor.fetchone()['rev'] or 0
+
+        cursor.execute("SELECT SUM(amount) as rev FROM orders WHERE status='approved' AND created_at >= NOW() - INTERVAL 7 DAY")
+        week_rev = cursor.fetchone()['rev'] or 0
+
+        cursor.execute("SELECT SUM(amount) as rev FROM orders WHERE status='approved' AND created_at >= NOW() - INTERVAL 30 DAY")
+        month_rev = cursor.fetchone()['rev'] or 0
+
         cursor.close()
         conn.close()
 
-        text = f"📊 *Earnings & Analytics Summary*\n\n" \
+        text = f"📊 *Advanced Earnings & Analytics*\n\n" \
                f"👥 Total Users: `{total_users}`\n" \
-               f"📦 Total Orders: `{total_orders}`\n" \
-               f"💰 Total Revenue: `₹{total_rev}`"
+               f"📦 Total Orders: `{total_orders}` (Pending: `{pending_orders}`, Approved: `{approved_orders}`, Rejected: `{rejected_orders}`)\n\n" \
+               f"💰 Total Revenue: `₹{total_rev}`\n" \
+               f"📅 Today's Revenue: `₹{today_rev}`\n" \
+               f"📈 Last 7 Days Revenue: `₹{week_rev}`\n" \
+               f"🗓️ Last 30 Days Revenue: `₹{month_rev}`"
         
         markup = InlineKeyboardMarkup()
         markup.add(InlineKeyboardButton("🔙 Back to Menu", callback_data="m_main_menu"))
@@ -245,7 +313,7 @@ def master_callbacks(call):
         cursor.close()
         conn.close()
 
-        text = f"👥 *User Management*\n\nTotal Registered Users across bots: `{count}`"
+        text = f"👥 *User Management*\n\nTotal Registered Users across all bots: `{count}`"
         markup = InlineKeyboardMarkup()
         markup.add(InlineKeyboardButton("🔙 Back to Menu", callback_data="m_main_menu"))
         master_bot.edit_message_text(text, chat_id, call.message.message_id, reply_markup=markup)
@@ -294,6 +362,24 @@ def save_new_product(message):
         conn.close()
 
         master_bot.send_message(message.chat.id, f"✅ *Product '{name}' added successfully!*")
+    except Exception as e:
+        master_bot.send_message(message.chat.id, f"❌ *Invalid format or error:* `{e}`")
+
+def save_new_channel(message):
+    try:
+        parts = message.text.split('|')
+        chan_id = parts[0].strip()
+        chan_name = parts[1].strip()
+        invite = parts[2].strip() if len(parts) > 2 else ""
+
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO channels (channel_id, channel_name, invite_link) VALUES (%s, %s, %s)", (chan_id, chan_name, invite))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        master_bot.send_message(message.chat.id, f"✅ *Channel '{chan_name}' added successfully!*")
     except Exception as e:
         master_bot.send_message(message.chat.id, f"❌ *Invalid format or error:* `{e}`")
 
@@ -403,91 +489,4 @@ def run_client_bot(token):
         upi_id = upi_res['setting_value'] if upi_res else "merchant@upi"
         qr_id = qr_res['setting_value'] if qr_res else ""
 
-        pay_text = f"💳 *PAYMENT REQUIRED*\n\n" \
-                   f"📦 Item: {category['name']}\n" \
-                   f"💰 Amount: ₹{category['price']}\n" \
-                   f"🆔 Order ID: `#{order_id}`\n\n" \
-                   f"UPI ID: `{upi_id}`\n\n" \
-                   f"👉 Please make payment and click below to upload screenshot:"
-
-        markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton("📸 Send Payment Screenshot", callback_data=f"pay_ss_{order_id}"))
-
-        if qr_id:
-            client_bot.send_photo(chat_id, qr_id, caption=pay_text, reply_markup=markup)
-        else:
-            client_bot.send_message(chat_id, pay_text, reply_markup=markup)
-
-    @client_bot.callback_query_handler(func=lambda call: call.data.startswith('pay_ss_'))
-    def ask_for_screenshot(call):
-        order_id = call.data.split('_')[2]
-        msg = client_bot.send_message(call.message.chat.id, f"📸 *Send payment screenshot photo for Order `#{order_id}` now:*")
-        client_bot.register_next_step_handler(msg, receive_screenshot, order_id)
-
-    def receive_screenshot(message, order_id):
-        chat_id = message.chat.id
-        if not message.photo:
-            client_bot.send_message(chat_id, "❌ *Please send a valid photo screenshot.*")
-            return
-
-        file_id = message.photo[-1].file_id
-
-        conn = get_db()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("UPDATE orders SET screenshot_file_id = %s WHERE order_id = %s", (file_id, order_id))
-        cursor.execute("SELECT o.*, c.name FROM orders o JOIN categories c ON o.category_id = c.id WHERE o.order_id = %s", (order_id,))
-        order = cursor.fetchone()
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        client_bot.send_message(chat_id, "✅ *Screenshot received successfully! Admin will verify and approve soon.*")
-
-        if SUPER_ADMIN_ID:
-            admin_txt = f"🔔 *NEW PAYMENT PROOF!*\n\nOrder: `#{order_id}`\nUser: `{chat_id}`\nProduct: {order['name']}\nAmount: ₹{order['amount']}"
-            markup = InlineKeyboardMarkup()
-            markup.add(
-                InlineKeyboardButton("✅ Approve", callback_data=f"app_{order_id}"),
-                InlineKeyboardButton("❌ Reject", callback_data=f"rej_{order_id}")
-            )
-            master_bot.send_photo(SUPER_ADMIN_ID, file_id, caption=admin_txt, reply_markup=markup)
-
-    client_bot.infinity_polling(skip_pending=True)
-
-@master_bot.callback_query_handler(func=lambda call: call.data.startswith(('app_', 'rej_')))
-def handle_order_approval(call):
-    if not is_admin(call.from_user.id):
-        return
-
-    action, order_id = call.data.split('_', 1)
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM orders WHERE order_id = %s", (order_id,))
-    order = cursor.fetchone()
     
-    if not order:
-        cursor.close()
-        conn.close()
-        master_bot.answer_callback_query(call.id, "❌ Order not found!")
-        return
-
-    user_chat_id = order['user_chat_id']
-
-    if action == 'app':
-        cursor.execute("UPDATE orders SET status = 'approved' WHERE order_id = %s", (order_id,))
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        master_bot.edit_message_caption(f"✅ *Order #{order_id} Approved Successfully!*", call.message.chat.id, call.message.message_id)
-        try:
-            master_bot.send_message(user_chat_id, f"🎉 *Payment Approved!*\n\nYour order `#{order_id}` has been verified successfully. Enjoy your premium access!")
-        except Exception:
-            pass
-    else:
-        cursor.execute("UPDATE orders SET status = 'rejected' WHERE order_id = %s", (order_id,))
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        master_bot.edit_message_caption(f"❌ 
