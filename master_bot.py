@@ -8,12 +8,12 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 load_dotenv()
 
-MASTER_TOKEN = os.getenv("8892594189:AAEwvSZsssjcK_xJhS8CgpfVwJEgUp11NYc-KS2r_6bw")
-SUPER_ADMIN_ID = int(os.getenv("8999416691", 0))
+MASTER_TOKEN = os.getenv("MASTER_BOT_TOKEN")
+SUPER_ADMIN_ID = int(os.getenv("SUPER_ADMIN_ID", 0))
 
-DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_HOST = os.getenv("DB_HOST", "mysql.railway.internal")
 DB_USER = os.getenv("DB_USER", "root")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "bZSgxvOjdlpLNVrtooTHbIoLapgnVCLZ")
 DB_NAME = os.getenv("DB_NAME", "railway")
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
