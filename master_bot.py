@@ -14,7 +14,7 @@ SUPER_ADMIN_ID = int(os.getenv("8999416691", 0))
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_USER = os.getenv("DB_USER", "root")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "")
-DB_NAME = os.getenv("MASTER_BOT_DB", "master_bot_db")
+DB_NAME = os.getenv("DB_NAME", "railway")
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -25,6 +25,96 @@ def get_db():
     return mysql.connector.connect(
         host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, charset='utf8mb4'
     )
+
+# ==================== AUTO DATABASE TABLES SETUP ====================
+def init_db():
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # 1. Bots Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS bots (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                bot_token VARCHAR(255) UNIQUE NOT NULL,
+                bot_username VARCHAR(100),
+                is_active TINYINT DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        # 2. Admins Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS admins (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id BIGINT UNIQUE NOT NULL,
+                username VARCHAR(100),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        # 3. Users Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                chat_id BIGINT UNIQUE NOT NULL,
+                bot_id INT,
+                first_name VARCHAR(255),
+                username VARCHAR(100),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        # 4. Categories Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS categories (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                bot_id INT,
+                name VARCHAR(255) NOT NULL,
+                price DECIMAL(10,2) NOT NULL,
+                days INT DEFAULT 30,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        # 5. Category Videos Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS category_videos (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                category_id INT NOT NULL,
+                video_file_id VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        # 6. Orders Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS orders (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                order_id VARCHAR(50) UNIQUE NOT NULL,
+                user_chat_id BIGINT NOT NULL,
+                category_id INT NOT NULL,
+                amount DECIMAL(10,2) NOT NULL,
+                status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+                screenshot_file_id VARCHAR(255),
+                admin_message_id BIGINT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        # 7. Settings Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS settings (
+                setting_key VARCHAR(100) PRIMARY KEY,
+                setting_value TEXT
+            )
+        """)
+        cursor.execute("""
+            INSERT IGNORE INTO settings (setting_key, setting_value) VALUES 
+            ('upi_id', 'merchant@upi'),
+            ('qr_file_id', ''),
+            ('start_caption', 'Welcome! Choose a category below:')
+        """)
+        conn.commit()
+        cursor.close()
+        conn.close()
+        logger.info("Database tables initialized successfully!")
+    except Exception as e:
+        logger.error(f"Database initialization failed: {e}")
 
 def is_admin(user_id):
     if user_id == SUPER_ADMIN_ID:
@@ -98,7 +188,6 @@ def save_new_bot(message):
         conn.close()
 
         master_bot.send_message(message.chat.id, f"✅ Bot `@{bot_username}` successfully added and started!")
-        # Start running this bot dynamically in a thread
         threading.Thread(target=run_client_bot, args=(token,)).start()
     except Exception as e:
         master_bot.send_message(message.chat.id, f"❌ Failed to add bot: {e}")
@@ -116,7 +205,7 @@ def save_upi_setting(message):
 
 # ==================== CLIENT BOT RUNNER & LOGIC ====================
 def run_client_bot(token):
-    client_bot = telebot.TeleBot(token, parse_mode='Session')
+    client_bot = telebot.TeleBot(token, parse_mode='Markdown')
 
     @client_bot.message_handler(commands=['start'])
     def client_start(message):
@@ -124,12 +213,10 @@ def run_client_bot(token):
         conn = get_db()
         cursor = conn.cursor(dictionary=True)
         
-        # Save user
         cursor.execute("INSERT INTO users (chat_id, first_name, username) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE first_name=%s", 
                        (chat_id, message.from_user.first_name, message.from_user.username, message.from_user.first_name))
         conn.commit()
 
-        # Fetch categories with price
         cursor.execute("SELECT * FROM categories")
         categories = cursor.fetchall()
         
@@ -170,7 +257,6 @@ def run_client_bot(token):
             client_bot.answer_callback_query(call.id, "Category not found!")
             return
 
-        # Step 1: Send all 5 videos together or sequentially
         client_bot.send_message(chat_id, f"🎬 Here are your videos for *{category['name']}*:")
         for v in videos:
             try:
@@ -178,7 +264,6 @@ def run_client_bot(token):
             except Exception:
                 pass
 
-        # Step 2: Generate Order & QR Code based on Price
         order_id = f"ORD{call.message.date}"
         conn = get_db()
         cursor = conn.cursor()
@@ -231,7 +316,6 @@ def run_client_bot(token):
 
         client_bot.send_message(chat_id, "✅ Screenshot received! Admin will verify soon.")
 
-        # Notify Master Admin
         if SUPER_ADMIN_ID:
             admin_txt = f"🔔 *New Payment Proof!*\n\nOrder: `#{order_id}`\nUser: `{chat_id}`\nCategory: {order['name']}\nAmount: ₹{order['amount']}"
             markup = InlineKeyboardMarkup()
@@ -243,20 +327,23 @@ def run_client_bot(token):
 
     client_bot.infinity_polling(skip_pending=True)
 
-# Auto-start all registered client bots from database on startup
 def load_all_bots():
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT bot_token FROM bots WHERE is_active = 1")
-    bots = cursor.fetchall()
-    cursor.close()
-    conn.close()
+    try:
+        conn = get_db()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT bot_token FROM bots WHERE is_active = 1")
+        bots = cursor.fetchall()
+        cursor.close()
+        conn.close()
 
-    for b in bots:
-        threading.Thread(target=run_client_bot, args=(b['bot_token'],)).start()
+        for b in bots:
+            threading.Thread(target=run_client_bot, args=(b['bot_token'],)).start()
+    except Exception as e:
+        logger.error(f"Error loading bots: {e}")
 
 if __name__ == '__main__':
+    init_db()  # Automatically creates tables on startup
     load_all_bots()
     logger.info("Master Control Bot is running...")
     master_bot.infinity_polling(skip_pending=True)
-      
+        
