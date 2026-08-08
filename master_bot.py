@@ -1,9 +1,12 @@
 import logging
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo, Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 # अपना बॉट टोकन यहाँ डालें
 TOKEN = "8892594189:AAFPZ6J6l5xzD_gAuP2DzUKvqOWGxBJYzXI"
+
+# तेरी GitHub Pages वाली Mini App का लिंक
+MINI_APP_URL = "https://ssahil80931-hash.github.io/my-miniapp/"
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -11,13 +14,11 @@ logging.basicConfig(
 )
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    welcome_text = "नीचे दिए गए लिंक बटन टेलीग्राम में स्काई-ब्लू/नीले रंग में दिखाई देंगे:"
+    welcome_text = "नीचे दिए गए बटन पर क्लिक करें (इसके अंदर के बटन स्काई-ब्लू होंगे):"
     
-    # URL वाले बटन (टेलीग्राम ऐप इन्हें स्काई-ब्लू/नीला दिखाता है)
+    # यहाँ URL की जगह 'web_app' का इस्तेमाल करना ज़रूरी है
     keyboard = [
-        [InlineKeyboardButton("🌐 Main Website", url="https://google.com")],
-        [InlineKeyboardButton("📢 Join Channel", url="https://t.me/telegram")],
-        [InlineKeyboardButton("💬 Official Support", url="https://t.me/telegram")]
+        [InlineKeyboardButton("🌐 Open Plans Menu", web_app=WebAppInfo(url=MINI_APP_URL))]
     ]
     
     reply_markup = InlineKeyboardMarkup(keyboard)
