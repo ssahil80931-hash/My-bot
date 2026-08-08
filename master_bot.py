@@ -11,8 +11,8 @@ TOKEN = "8715411517:AAFDDmJb0G_lMbfwY_27WSuE4drIBgHsOU4"
 UPI_ID = "Q691189350@ybl"
 ADMIN_ID = 8999416691 
 BANNER_URL = "https://pic-link-bot.lovable.app/i/telegram-1779454035738-e9821961.jpg"
-PREMIUM_LINK = "https://t.me/+bQ4zD8v0JpIxZTgx"
-BOT_USERNAME = "YourBotUsername" # यहाँ अपने बोट का यूजरनेम लिख ले (बिना @ के)
+PREMIUM_LINK = "https://t.me/+XjcIJ2pgjV02MjQx"
+BOT_USERNAME = "Premiumpaiddd_bot" # यहाँ अपने बोट का यूजरनेम लिख ले (बिना @ के)
 
 bot = telebot.TeleBot(TOKEN)
 
