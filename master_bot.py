@@ -491,7 +491,7 @@ def run_client_bot(token):
     @client_bot.message_handler(commands=['start'])
     def client_start(message):
         chat_id = message.chat.id
-        conn = get
+        
                 conn = get_db()
         cursor = conn.cursor()
         
