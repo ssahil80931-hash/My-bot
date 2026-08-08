@@ -1,32 +1,38 @@
+import os
 import logging
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo, Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
-# अपना बॉट टोकन यहाँ डालें
-TOKEN = "8892594189:AAFPZ6J6l5xzD_gAuP2DzUKvqOWGxBJYzXI"
+logging.basicConfig(level=logging.INFO)
 
-# तेरी GitHub Pages वाली Mini App का लिंक
-MINI_APP_URL = "https://ssahil80931-hash.github.io/my-miniapp/"
-
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
+TOKEN = os.getenv("BOT_TOKEN")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    welcome_text = "नीचे दिए गए बटन पर क्लिक करें (इसके अंदर के बटन स्काई-ब्लू होंगे):"
-    
-    # यहाँ URL की जगह 'web_app' का इस्तेमाल करना ज़रूरी है
     keyboard = [
-        [InlineKeyboardButton("🌐 Open Plans Menu", web_app=WebAppInfo(url=MINI_APP_URL))]
+        [
+            InlineKeyboardButton("हरा बटन (Success)", callback_data="green", style="success"),
+            InlineKeyboardButton("नीला बटन (Primary)", callback_data="blue", style="primary"),
+        ],
+        [
+            InlineKeyboardButton("लाल बटन (Danger)", callback_data="red", style="danger"),
+        ]
     ]
-    
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text(welcome_text, reply_markup=reply_markup)
+    await update.message.reply_text(
+        "बटन्स टेस्ट करो भाई। हरा, नीला और लाल कलर दिखना चाहिए।",
+        reply_markup=reply_markup
+    )
+
+async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    await query.edit_message_text(f"तुमने दबाया: {query.data}")
+
+def main():
+    app = Application.builder().token(TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CallbackQueryHandler(button_handler))
+    app.run_polling()
 
 if __name__ == "__main__":
-    app = ApplicationBuilder().token(TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    print("Bot is running...")
-    app.run_polling()
-    
+    main()
