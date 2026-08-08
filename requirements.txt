@@ -1,1 +1,5 @@
-python-telegram-bot>=21.0
+pyTelegramBotAPI
+python-dotenv
+qrcode[pil]
+Pillow
+requests
