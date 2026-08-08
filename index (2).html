@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan Selection</title>
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212; /* डार्क बैकग्राउंड */
+            color: #ffffff;
+            padding: 15px;
+            margin: 0;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        /* स्काई-ब्लू बटन का डिज़ाइन */
+        .skyblue-btn {
+            width: 100%;
+            padding: 14px;
+            background-color: #38b6ff; /* यह है स्काई-ब्लू कलर का कोड */
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: background-color 0.2s;
+        }
+        .skyblue-btn:active {
+            background-color: #0091ea;
+        }
+    </style>
+</head>
+<body>
+    <h2>Select Your Plan:</h2>
+    <div class="container">
+        <!-- यह तेरे प्लांस के बटन हैं -->
+        <button class="skyblue-btn" onclick="sendPlan('Plan ₹49 (15 days)')">💀 Plan - ₹49.00 (15 days)</button>
+        <button class="skyblue-btn" onclick="sendPlan('Plan ₹99 (30 days)')">🔥 Plan - ₹99.00 (30 days)</button>
+        <button class="skyblue-btn" onclick="sendPlan('Plan ₹199 (499 days)')">💋 Plan - ₹199.00 (499 days)</button>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand(); // इससे मिनी ऐप पूरी स्क्रीन पर खुलेगी
+
+        function sendPlan(planDetails) {
+            // बोट को डेटा वापस भेजें और Mini App बंद करें
+            tg.sendData(planDetails);
+        }
+    </script>
+</body>
+</html>
