@@ -615,6 +615,135 @@ def run_client_bot(token):
         order = cursor.fetchone()
         conn.commit()
         cursor.close()
+def run_client_bot(token):
+    client_bot = telebot.TeleBot(token, parse_mode='Markdown')
+
+    @client_bot.message_handler(commands=['start'])
+    def client_start(message):
+        chat_id = message.chat.id
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            INSERT INTO users (chat_id, first_name, username) VALUES (?, ?, ?)
+            ON CONFLICT(chat_id) DO UPDATE SET first_name = excluded.first_name, username = excluded.username
+        """, (chat_id, message.from_user.first_name, message.from_user.username))
+        conn.commit()
+
+        cursor.execute("SELECT * FROM categories WHERE is_active = 1")
+        categories = cursor.fetchall()
+        
+        cursor.execute("SELECT setting_value FROM settings WHERE setting_key='start_caption'")
+        cap_res = cursor.fetchone()
+        caption = cap_res['setting_value'] if cap_res else "✨ *Welcome to Store* ✨\n\nChoose a category below:"
+        
+        cursor.close()
+        conn.close()
+
+        markup = InlineKeyboardMarkup(row_width=1)
+        for cat in categories:
+            markup.add(InlineKeyboardButton(f"🛒 {cat['name']} - ₹{cat['price']}", callback_data=f"cat_{cat['id']}"))
+
+        client_bot.send_message(chat_id, caption, reply_markup=markup)
+
+    @client_bot.callback_query_handler(func=lambda call: call.data.startswith('cat_'))
+    def handle_category_click(call):
+        chat_id = call.message.chat.id
+        cat_id = call.data.split('_')[1]
+
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM categories WHERE id = ?", (cat_id,))
+        category = cursor.fetchone()
+
+        cursor.execute("SELECT video_file_id FROM category_videos WHERE category_id = ?", (cat_id,))
+        videos = cursor.fetchall()
+
+        cursor.execute("SELECT setting_value FROM settings WHERE setting_key='upi_id'")
+        upi_res = cursor.fetchone()
+        cursor.execute("SELECT setting_value FROM settings WHERE setting_key='qr_file_id'")
+        qr_res = cursor.fetchone()
+        cursor.execute("SELECT setting_value FROM settings WHERE setting_key='support_link'")
+        supp_res = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if not category:
+            client_bot.answer_callback_query(call.id, "❌ Category not found!")
+            return
+
+        detail_text = f"📂 *Product:* {category['name']}\n💰 *Price:* ₹{category['price']}\n⏳ *Validity:* {category['days']} Days\n\n📝 {category['description']}"
+        client_bot.send_message(chat_id, detail_text)
+        
+        if videos:
+            client_bot.send_message(chat_id, "🎬 *Here are the Demo Videos for this pack:*")
+            for v in videos:
+                try:
+                    client_bot.send_video(chat_id, v['video_file_id'])
+                except Exception:
+                    pass
+
+        order_id = f"ORD{call.message.date}"
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO orders (order_id, user_chat_id, category_id, amount, status) VALUES (?, ?, ?, ?, 'pending')",
+                       (order_id, chat_id, cat_id, category['price']))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        upi_id = upi_res['setting_value'] if upi_res else "merchant@upi"
+        qr_id = qr_res['setting_value'] if qr_res else ""
+        support_url = supp_res['setting_value'] if supp_res else "https://t.me/YourUsername"
+
+        pay_text = f"💳 *PAYMENT BILL*\n\n" \
+                   f"📂 Category: {category['name']}\n" \
+                   f"📊 Validity / Details: {category['days']} Days Access\n" \
+                   f"💰 Payable Amount: ₹{category['price']}\n" \
+                   f"🆔 Order ID: `#{order_id}`\n\n" \
+                   f"🌐 UPI ID: `{upi_id}`\n\n" \
+                   f"✅ Pay karke niche 'I Have Paid' dabayein:"
+
+        markup = InlineKeyboardMarkup(row_width=1)
+        markup.add(
+            InlineKeyboardButton("📸 I Have Paid (Send Screenshot)", callback_data=f"pay_ss_{order_id}"),
+            InlineKeyboardButton("💬 Contact / DM Admin", url=support_url)
+        )
+
+        if qr_id:
+            try:
+                client_bot.send_photo(chat_id, qr_id, caption=pay_text, reply_markup=markup)
+            except Exception:
+                client_bot.send_message(chat_id, pay_text, reply_markup=markup)
+        else:
+            client_bot.send_message(chat_id, pay_text, reply_markup=markup)
+
+    @client_bot.callback_query_handler(func=lambda call: call.data.startswith('pay_ss_'))
+    def ask_for_screenshot(call):
+        order_id = call.data.split('_')[2]
+        msg = client_bot.send_message(call.message.chat.id, f"📸 *Send payment screenshot photo for Order `#{order_id}` now:*")
+        client_bot.register_next_step_handler(msg, receive_screenshot, order_id)
+
+    def receive_screenshot(message, order_id):
+        chat_id = message.chat.id
+        if not message.photo:
+            client_bot.send_message(chat_id, "❌ *Please send a valid photo screenshot.*")
+            return
+
+        file_id = message.photo[-1].file_id
+
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE orders SET screenshot_file_id = ? WHERE order_id = ?", (file_id, order_id))
+        
+        cursor.execute("""
+            SELECT o.*, c.name FROM orders o 
+            JOIN categories c ON o.category_id = c.id 
+            WHERE o.order_id = ?
+        """, (order_id,))
+        order = cursor.fetchone()
+        conn.commit()
+        cursor.close()
         conn.close()
 
         client_bot.send_message(chat_id, "✅ *Screenshot received successfully! Admin will verify and approve soon.*")
@@ -629,6 +758,7 @@ def run_client_bot(token):
             master_bot.send_photo(SUPER_ADMIN_ID, file_id, caption=admin_txt, reply_markup=markup)
 
     client_bot.infinity_polling(skip_pending=True)
+
 
 @master_bot.callback_query_handler(func=lambda call: call.data.startswith(('app_', 'rej_')))
 def handle_order_approval(call):
