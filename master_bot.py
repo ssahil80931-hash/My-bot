@@ -5,7 +5,7 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Cont
 
 logging.basicConfig(level=logging.INFO)
 
-TOKEN = os.getenv("BOT_TOKEN")
+TOKEN = os.getenv("8892594189:AAFPZ6J6l5xzD_gAuP2DzUKvqOWGxBJYzXI")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
