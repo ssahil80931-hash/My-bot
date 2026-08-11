@@ -7,12 +7,12 @@ import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, InputMediaVideo
 
 # ====== CONFIGURATION ======
-TOKEN = "85202558:AAEuL_8BiS2QbJjGBzzAkbedYN0N9-tw4NU"
+TOKEN = "8715411517:AAFDDmJb0G_lMbfwY_27WSuE4drIBgHsOU4"
 UPI_ID = "Q691189350@ybl"
 ADMIN_ID = 8999416691 
 BANNER_URL = "https://pic-link-bot.lovable.app/i/telegram-1779454035738-e9821961.jpg"
 PREMIUM_LINK = "https://t.me/+bQ4zD8v0JpIxZTgx"
-BOT_USERNAME = "YourBotUsername" # यहाँ अपने बोट का यूजरनेम बिना @ के लिख ले
+BOT_USERNAME = "Premiumpaiddd_bot" # यहाँ अपने बोट का यूजरनेम बिना @ के लिख ले
 
 bot = telebot.TeleBot(TOKEN)
 
