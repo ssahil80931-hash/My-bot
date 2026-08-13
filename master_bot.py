@@ -16,7 +16,6 @@ BOT_USERNAME = "Premiumpaiddd_bot" # यहाँ अपने बोट का 
 
 bot = telebot.TeleBot(TOKEN)
 
-# हर कैटेगरी में 5-5 वीडियोज़ के लिंक सेट कर दिए हैं
 CATEGORIES = {
     "desi": {
         "name": "💦 Real Indian Desi P*rn", 
@@ -37,11 +36,11 @@ CATEGORIES = {
         "days": "Lifetime", 
         "count": "1,00,000+", 
         "videos": [
-            "BAACAgQAAxkDAAEFVWFqeoI_tgXk2r0VRwIF40Qjc59-zAACmhsAAnxhUVFJq7YAAYuc7ug9BA", 
-            "BAACAgQAAxkDAAEFVWBqeoI_J32JwPL_XnJpAAGUTQ6WO_sAApkbAAJ8YVFRo2XUljSdbmk9BA",
-            "BAACAgQAAxkDAAEFVV9qeoI_F1n17jCW_FLbyhf9BBTXuwACmBsAAnxhUVFx0dIZ32Goaz0E",
-            "BAACAgQAAxkDAAEFVV5qeoI_gYZmUKM0bRmD5yo27ureWwAClxsAAnxhUVGZayqEUtP-Vz0E",
-            "BAACAgQAAxkDAAEFVV1qeoI_Abk7-XK8enwAAQ2mdqeXYD8AApUbAAJ8YVFRjC4_4dmsgto9BA"
+            "BAACAgQAAxkDAAEFVYZqeoqFr_aAVbNd-wpU-Vt_DEk5FAACqiIAAg0yGVGoOgG8oC9uAT0E", 
+            "BAACAgQAAxkDAAEFVYdqeoqFD46_mznDIfV9COY_a59HJQACqyIAAg0yGVG1R6bJ5EEtNz0E",
+            "BAACAgQAAxkDAAEFVYhqeoqFK8zWe_4pf2gaBxTmcWCLyAACrCIAAg0yGVGVr81VZ5_mOD0E",
+            "BAACAgQAAxkDAAEFVYlqeoqF5AABrhVCdi4NSDUTdmS0ar4AAq0iAAINMhlRMF21IFL9wzc9BA",
+            "BAACAgQAAxkDAAEFVYpqeoqFyvhOnR4kM-2BJ0mokROEpQACriIAAg0yGVEiZ_6JYPdV4D0E"
         ]
     },
     "channels": {
@@ -76,7 +75,7 @@ CATEGORIES = {
         "days": "Lifetime", 
         "count": "50,000+", 
         "videos": [
-            "BAACAgQAAxkDAAEFVVlqeoIp_rkRc9UUjurz7r85g_7seAACqSIAAg0yGVF2LnKy2PAO9z0E, 
+            "BAACAgQAAxkDAAEFVVlqeoIp_rkRc9UUjurz7r85g_7seAACqSIAAg0yGVF2LnKy2PAO9z0E", 
             "BAACAgQAAxkDAAEFVVhqeoIpgns2eGjJSFPKbF10uSo5VAACqCIAAg0yGVHSZim8ffp3vz0E",
             "BAACAgQAAxkDAAEFVVdqeoIpGh-Mh400Hts4d4ShbdDk2gACpyIAAg0yGVHAcQTi_7yyRD0E",
             "BAACAgQAAxkDAAEFVVZqeoIpOifbiZ39vmc6NK3F660u8wACpiIAAg0yGVHjNAJTvt76Uj0E",
@@ -84,13 +83,13 @@ CATEGORIES = {
         ]
     },
     "rape": {
-        "name": "💀 𝐑@𝐩€ 𝐜@𝐬𝐞 𝐢nd¡𝐚𝐧 💢🌚", 
+        "name": "💀 𝐑@𝐩€ 𝐜@𝐬𝐞 𝐢𝐧𝐝¡𝐚𝐧 💢🌚", 
         "price": 199, 
         "days": "Lifetime", 
         "count": "50,000+", 
         "videos": [
             "BAACAgQAAxkDAAEFVT9qen7LRQHrvRZ1UL73ENgl--q-TAACqB8AAko-kFChaCYQRCAvzj0E", 
-            "BAACAgQAAxkDAAEFVT5qen7LQHnYttDLYCo4OCzSyGaDbwACpx8AAko-kFCf_n6hGIrrwT0E--q-TAACqB8AAko-kFChaCYQRCAvzj0E",
+            "BAACAgQAAxkDAAEFVT5qen7LQHnYttDLYCo4OCzSyGaDbwACpx8AAko-kFCf_n6hGIrrwT0E",
             "BAACAgQAAxkDAAEFVT1qen7LRmCchl0YUXpua_y5RX13IAACph8AAko-kFAeHkh3hTXnOj0E",
             "BAACAgQAAxkDAAEFVTxqen7L4BEnfc-1tAUtSIUwMwLy-QACpR8AAko-kFA6nzWNRilfbz0E",
             "https://files.catbox.moe/lr228r.mp4"
@@ -108,26 +107,18 @@ def start(message):
     
     welcome_text = (
         "🔥━━━━━━━━━━━━━━━━━━━🔥\n"
-        "      🎉 **𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝐓𝐎 𝐏𝐑𝐄𝐌𝐈𝐔𝐌 𝐇𝐔𝐁** 🎉\n"
-        "🔥━━━━━━━━━━━━━━━━━━━🔥\n\n"
-        "✨ **Get 100% Exclusive & Uncensored Private Access!**\n"
-        "💎 *Super Affordable Plans Starting at Just ₹69 Only!*\n\n"
-        "🚀 **AVAILABLE CATEGORIES & STOCK:**\n"
-        "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        "💦 **Real Indian Desi Videos** — ₹69 (Lifetime)\n"
-        "🔥 **All In One 100+ Categories** — ₹169 (Lifetime)\n"
-        "🚀 **100+ Private Channels** — ₹299 (Lifetime)\n"
-        "🌝 **Indian Special Content** — ₹99 (Lifetime)\n"
-        "🥶 **Mom & Son Collection** — ₹149 (Lifetime)\n"
-        "💀 **Rape / Heavy Desi Cases** — ₹199 (Lifetime)\n"
-        "━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-        "⚡ **Total Stock:** 10,00,000+ Videos ✅\n"
-        "⏳ **Validity:** Lifetime Access (No Extra Charges) ✅\n\n"
-        "🔗 **CHECK DEMO HERE:**\n"
-        "👉 https://telegra.ph/New-Collection-Sipi-07-10\n\n"
-        "👇 **CHOOSE YOUR PLAN BELOW TO START** 👇"
+         "🎉 𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐭𝐨 😋\n\n"
+        "✨ 𝐆𝐞𝐭 𝐞𝐱𝐜𝐥𝐮𝐬𝐢𝐯𝐞 𝐚𝐜𝐜𝐞𝐬𝐬 𝐭𝐨 𝐩𝐫𝐞𝐦𝐢𝐮𝐦 𝐜𝐨𝐧𝐭𝐞𝐧𝐭\n"
+        "💰 𝐀𝐟𝐟𝐨𝐫𝐝𝐚𝐛𝐥𝐞 𝐩𝐥𝐚𝐧𝐬 𝐬𝐭𝐚𝐫𝐭𝐢𝐧𝐠 𝐚𝐭 𝐣𝐮𝐬𝐭 ₹6𝟗\n\n"
+        "🥵 𝐀𝐋𝐋 𝐓𝐘𝐏𝐄 𝐏𝐎𝐑𝐍 𝐕𝐈𝐃𝐄𝐎𝐒 𝐀𝐕𝐀𝐈𝐋𝐀𝐁𝐋𝐄 🥵\n\n"
+        "💦 𝐑𝐞𝐚𝐥 𝐈𝐧𝐝!𝐚𝐧 𝐃ē𝐬𝐢 𝐏𝟎𝐫𝐧 🫦 𝟓𝟎𝟎𝟎𝟎+ 𝐕!𝐝𝐞𝐨𝐬\n"
+        "🌝 ¢𝐡!𝐥𝐝 𝐏𝟎𝐫𝐧 𝐈𝐧𝐝!𝐚𝐧 ⚡️⚡️   𝟓𝟎𝟎𝟎𝟎+ 𝐕!𝐝𝐞𝐨𝐬💥\n"
+        "🥶 𝐌0𝐦 & 𝐒0𝐧 𝐕¡𝐝𝐞𝐨𝐬 😱    𝟓𝟎𝟎𝟎𝟎+ 𝐕!𝐝𝐞𝐨𝐬\n"
+        "💀 𝐑@𝐩€ 𝐜@𝐬𝐞 𝐢𝐧𝐝¡𝐚𝐧 💢🌚   𝟓𝟎𝟎𝟎𝟎+ 𝐕!𝐝𝐞𝐨𝐬\n\n"
+        "🚀 𝐓𝐨𝐭𝐚𝐥 𝟏𝟎𝟎𝟎𝟎𝟎𝟎 𝐕!𝐝𝐞𝐨𝐬 𝐒𝐭0𝐜𝐤 ✅\n"
+        "🚀 𝐕𝐚𝐥𝐢𝐝𝐢𝐭𝐲 :- 𝐋𝐢𝐟𝐞𝐭𝐢𝐦𝐞 ✅\n\n"
+        "👇 𝐂𝐇𝐎𝐎𝐒𝐄 𝐀 𝐏𝐋𝐀𝐍 👇"
     )
-    
     markup = InlineKeyboardMarkup(row_width=1)
     for key, cat in CATEGORIES.items():
         markup.add(InlineKeyboardButton(f"{cat['name']} — ₹{cat['price']} / {cat['days']}", callback_data=f"buy_{key}", style="primary"))
@@ -142,19 +133,26 @@ def start(message):
 @bot.message_handler(commands=['broadcast'])
 def broadcast_command(message):
     if message.from_user.id != ADMIN_ID: return
-    msg = bot.send_message(message.chat.id, "📢 ब्रॉडकास्ट मैसेज भेजें:")
+    msg = bot.send_message(message.chat.id, "📢 ब्रॉडकास्ट के लिए अपना मैसेज, फोटो या वीडियो भेजें:")
     bot.register_next_step_handler(msg, send_broadcast_to_all)
 
 def send_broadcast_to_all(message):
     success, fail = 0, 0
     markup = InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("🔥 Buy Now / Open Bot", url=f"https://t.me/{BOT_USERNAME}", style="primary"))
+    
     for chat_id in active_users:
         try:
-            if message.content_type == 'text': bot.send_message(chat_id, message.text, reply_markup=markup)
-            elif message.content_type == 'photo': bot.send_photo(chat_id, message.photo[-1].file_id, caption=message.caption, reply_markup=markup)
+            if message.content_type == 'text':
+                bot.send_message(chat_id, message.text, reply_markup=markup)
+            elif message.content_type == 'photo':
+                bot.send_photo(chat_id, message.photo[-1].file_id, caption=message.caption, reply_markup=markup)
+            elif message.content_type == 'video':
+                bot.send_video(chat_id, message.video.file_id, caption=message.caption, reply_markup=markup)
             success += 1
-        except: fail += 1
+        except:
+            fail += 1
+            
     bot.send_message(ADMIN_ID, f"📢 Broadcast Done!\n✅ Success: {success}\n❌ Failed: {fail}")
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -215,6 +213,5 @@ def handle_photo(message):
         user_states[chat_id] = False
 
 if __name__ == "__main__":
-    print("Bot is running with 5 videos per category...")
+    print("Bot is running with full broadcast features...")
     bot.infinity_polling(skip_pending=True)
-    
