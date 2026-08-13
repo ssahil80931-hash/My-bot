@@ -18,7 +18,7 @@ bot = telebot.TeleBot(TOKEN)
 
 # सभी कैटेगरीज के 100% वर्किंग यूनिक वीडियो लिंक्स
 CATEGORIES = {
-        "desi": {
+    "desi": {
         "name": "💦 Real Indian Desi P*rn", 
         "price": 69, 
         "days": "Lifetime", 
@@ -164,7 +164,7 @@ def handle_callback(call):
         key = data_id.split("_")[1]
         data = CATEGORIES[key]
         
-        # 1. चारों वीडियो का मीडिया ग्रुप भेजने की कोशिश (अगर कोई दिक्कत हो भी तो try-except से QR नहीं रुकेगा)
+        # 1. चारों वीडियो का मीडिया ग्रुप भेजने की कोशिश
         videos = data.get('videos', [])
         if videos:
             try:
@@ -173,7 +173,7 @@ def handle_callback(call):
             except Exception as e:
                 print(f"Media group error: {e}")
                 
-        # 2. QR कोड और बिल हमेशा 100% भेजा जाएगा
+        # 2. QR कोड और बिल हमेशा भेजा जाएगा
         qr = qrcode.make(f"upi://pay?pa={UPI_ID}&am={data['price']}&cu=INR")
         bio = BytesIO()
         qr.save(bio, "PNG")
@@ -183,7 +183,6 @@ def handle_callback(call):
         markup.add(InlineKeyboardButton("✅ I Have Paid", callback_data="ask_proof", style="success"))
         
         bill_caption = (
-                bill_caption = (
             f"🔥 **{data['name']}** 🔥\n\n"
             f"💰 Price: ₹{data['price']}\n"
             f"📦 Total: {data['count']} Videos\n"
@@ -242,4 +241,3 @@ if __name__ == "__main__":
     except:
         pass
     bot.infinity_polling(skip_pending=True)
-    
