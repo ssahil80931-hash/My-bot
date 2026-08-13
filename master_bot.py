@@ -18,16 +18,14 @@ bot = telebot.TeleBot(TOKEN)
 
 # सभी कैटेगरीज के 100% वर्किंग यूनिक वीडियो लिंक्स
 CATEGORIES = {
-    "desi": {
+        "desi": {
         "name": "💦 Real Indian Desi P*rn", 
         "price": 69, 
-        "days": "Lifetime Access", 
-        "count": "50,000+ Videos", 
+        "days": "Lifetime", 
+        "count": "50,000+", 
         "videos": [
-            "https://files.catbox.moe/7sdo4a.mp4",
-            "https://files.catbox.moe/1b9zja.mp4",
-            "https://files.catbox.moe/i02d8l.mp4",
-            "https://files.catbox.moe/lbqulg.mp4"
+            "https://files.catbox.moe/lbqulg.mp4",
+            "https://files.catbox.moe/7sdo4a.mp4"
         ]
     },
     "allinone": {
@@ -185,15 +183,16 @@ def handle_callback(call):
         markup.add(InlineKeyboardButton("✅ I Have Paid", callback_data="ask_proof", style="success"))
         
         bill_caption = (
-            f"🔥 **VIP MEMBERSHIP BILL & DETAILS** 🔥\n\n"
-            f"📂 **Category:** {data['name']}\n"
-            f"💰 **Price:** ₹{data['price']} Only\n"
-            f"⏳ **Validity:** {data['days']} (जीवन भर का मज़ा)\n"
-            f"📦 **Total Stock:** {data['count']}\n\n"
-            f"🔹 **UPI ID:** `{UPI_ID}`\n\n"
-            f"⚡️ **ऊपर दिए गए QR कोड को स्कैन करके पेमेंट करें। पेमेंट सफल होने के बाद नीचे 'I Have Paid' बटन दबाकर तुरंत स्क्रीनशॉट भेजें!**"
+                bill_caption = (
+            f"🔥 **{data['name']}** 🔥\n\n"
+            f"💰 Price: ₹{data['price']}\n"
+            f"📦 Total: {data['count']} Videos\n"
+            f"💳 UPI ID: `{UPI_ID}`\n\n"
+            f"⚡️ **Scan QR to pay.**\n"
+            f"👇 **Hindi:**\n"
+            f"QR स्कैन करके पेमेंट करें, फिर नीचे **'I Have Paid'** दबाकर स्क्रीनशॉट भेजें!"
         )
-        
+
         bot.send_photo(
             chat_id, 
             photo=bio, 
