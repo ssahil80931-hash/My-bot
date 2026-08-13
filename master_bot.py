@@ -8,7 +8,7 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, InputMedia
 
 # ====== CONFIGURATION ======
 # यदि टोकन कभी Revoke किया हो, तो नया टोकन यहाँ डाल लेना
-TOKEN = "8715411517:AAFDDmJb0G_lMbfwY_27WSuE4drIBgHsOU4"
+TOKEN = "8715411517:AAECPXrzK4FHqzkmyrgsChtHylvm3GYS8IM"
 UPI_ID = "Q691189350@ybl"
 ADMIN_ID = 8999416691 
 BANNER_URL = "https://pic-link-bot.lovable.app/i/telegram-1779454035738-e9821961.jpg"
