@@ -123,11 +123,11 @@ def start(message):
     
     markup = InlineKeyboardMarkup(row_width=1)
     for key, cat in CATEGORIES.items():
-        markup.add(InlineKeyboardButton(f"{cat['name']} — ₹{cat['price']} / {cat['days']}", callback_data=f"buy_{key}"))
+        markup.add(InlineKeyboardButton(f"{cat['name']} — ₹{cat['price']} / {cat['days']}", callback_data=f"buy_{key}", style="primary"))
     
     markup.add(
-        InlineKeyboardButton("📖 How to Use", callback_data="how_to"),
-        InlineKeyboardButton("🚨 Report Issue", callback_data="report")
+        InlineKeyboardButton("📖 How to Use", callback_data="how_to", style="primary"),
+        InlineKeyboardButton("🚨 Report Issue", callback_data="report", style="primary")
     )
     
     bot.send_photo(chat_id, photo=BANNER_URL, caption=welcome_text, reply_markup=markup, parse_mode="Markdown")
@@ -141,7 +141,7 @@ def broadcast_command(message):
 def send_broadcast_to_all(message):
     success, fail = 0, 0
     markup = InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton("🔥 Buy Now / Open Bot", url=f"https://t.me/{BOT_USERNAME}"))
+    markup.add(InlineKeyboardButton("🔥 Buy Now / Open Bot", url=f"https://t.me/{BOT_USERNAME}", style="primary"))
     
     for chat_id in active_users:
         try:
@@ -171,19 +171,31 @@ def handle_callback(call):
         key = data_id.split("_")[1]
         data = CATEGORIES[key]
         
-        videos = data['videos']
+        # सबसे पहले वीडियो/मीडिया ग्रुप भेजेगा
+        videos = data.get('videos', [])
         if videos:
             try:
-                media_group = [InputMediaVideo(v) for v in videos[:10]]
+                media_group = [InputMediaVideo(v) for v in videos[:5]]
                 bot.send_media_group(chat_id, media_group)
-            except:
-                pass
+            except Exception as e:
+                print(f"Error sending videos: {e}")
                 
+        # उसके तुरंत बाद QR कोड और पेमेंट बिल भेजेगा
         qr = qrcode.make(f"upi://pay?pa={UPI_ID}&am={data['price']}&cu=INR")
-        bio = BytesIO(); qr.save(bio, "PNG"); bio.seek(0)
+        bio = BytesIO()
+        qr.save(bio, "PNG")
+        bio.seek(0)
+        
         markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton("✅ I Have Paid", callback_data="ask_proof"))
-        bot.send_photo(chat_id, photo=bio, caption=f"💳 **PAYMENT BILL**\n\n📂 Category: {data['name']}\n💰 Amount: ₹{data['price']}\n\n✅ Pay करके नीचे 'I Have Paid' बटन दबाएं और स्क्रीनशॉट भेजें।", reply_markup=markup, parse_mode="Markdown")
+        markup.add(InlineKeyboardButton("✅ I Have Paid", callback_data="ask_proof", style="success"))
+        
+        bot.send_photo(
+            chat_id, 
+            photo=bio, 
+            caption=f"💳 **PAYMENT BILL**\n\n📂 Category: {data['name']}\n💰 Amount: ₹{data['price']}\n\n✅ Pay करके नीचे 'I Have Paid' बटन दबाएं और स्क्रीनशॉट भेजें।", 
+            reply_markup=markup, 
+            parse_mode="Markdown"
+        )
         
     elif data_id == "ask_proof":
         bot.send_message(chat_id, "📸 कृपया अपना पेमेंट स्क्रीनशॉट यहाँ भेजें ताकि एडमिन अप्रूव कर सके।")
@@ -212,14 +224,13 @@ def handle_photo(message):
         user = message.from_user
         markup = InlineKeyboardMarkup(row_width=2)
         markup.add(
-            InlineKeyboardButton("✅ Approve", callback_data=f"approve_{user.id}"),
-            InlineKeyboardButton("❌ Reject", callback_data=f"reject_{user.id}")
+            InlineKeyboardButton("✅ Approve", callback_data=f"approve_{user.id}", style="success"),
+            InlineKeyboardButton("❌ Reject", callback_data=f"reject_{user.id}", style="danger")
         )
         bot.send_photo(ADMIN_ID, photo=message.photo[-1].file_id, caption=f"👤 User Proof from @{user.username or user.first_name} (ID: {user.id})", reply_markup=markup)
         bot.reply_to(message, "✅ आपका पेमेंट प्रूफ एडमिन के पास भेज दिया गया है। कृपया इंतज़ार करें।")
         user_states[chat_id] = False
 
 if __name__ == "__main__":
-    print("Bot is running perfectly...")
+    print("Bot is running with 100% working buttons and video preview...")
     bot.infinity_polling(skip_pending=True)
-    
