@@ -12,7 +12,7 @@ UPI_ID = "Q691189350@ybl"
 ADMIN_ID = 8999416691 
 BANNER_URL = "https://pic-link-bot.lovable.app/i/telegram-1779454035738-e9821961.jpg"
 PREMIUM_LINK = "https://t.me/+WdmuQrQCWHgxNjdh"
-BOT_USERNAME = "Premiumpaiddd_bot" # यहाँ अपने बोट का यूजरनेम बिना @ के लिख ले
+BOT_USERNAME = "Premiumpaiddd_bot" # बिना @ के यूजरनेम
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -36,11 +36,11 @@ CATEGORIES = {
         "days": "Lifetime", 
         "count": "1,00,000+", 
         "videos": [
-            "BAACAgQAAxkDAAEFVYZqeoqFr_aAVbNd-wpU-Vt_DEk5FAACqiIAAg0yGVGoOgG8oC9uAT0E", 
-            "BAACAgQAAxkDAAEFVYdqeoqFD46_mznDIfV9COY_a59HJQACqyIAAg0yGVG1R6bJ5EEtNz0E",
-            "BAACAgQAAxkDAAEFVYhqeoqFK8zWe_4pf2gaBxTmcWCLyAACrCIAAg0yGVGVr81VZ5_mOD0E",
-            "BAACAgQAAxkDAAEFVYlqeoqF5AABrhVCdi4NSDUTdmS0ar4AAq0iAAINMhlRMF21IFL9wzc9BA",
-            "BAACAgQAAxkDAAEFVYpqeoqFyvhOnR4kM-2BJ0mokROEpQACriIAAg0yGVEiZ_6JYPdV4D0E"
+            "BAACAgQAAxkDAAEFVWFqeoI_tgXk2r0VRwIF40Qjc59-zAACmhsAAnxhUVFJq7YAAYuc7ug9BA", 
+            "BAACAgQAAxkDAAEFVWBqeoI_J32JwPL_XnJpAAGUTQ6WO_sAApkbAAJ8YVFRo2XUljSdbmk9BA",
+            "BAACAgQAAxkDAAEFVV9qeoI_F1n17jCW_FLbyhf9BBTXuwACmBsAAnxhUVFx0dIZ32Goaz0E",
+            "BAACAgQAAxkDAAEFVV5qeoI_gYZmUKM0bRmD5yo27ureWwAClxsAAnxhUVGZayqEUtP-Vz0E",
+            "BAACAgQAAxkDAAEFVV1qeoI_Abk7-XK8enwAAQ2mdqeXYD8AApUbAAJ8YVFRjC4_4dmsgto9BA"
         ]
     },
     "channels": {
@@ -49,11 +49,11 @@ CATEGORIES = {
         "days": "Lifetime", 
         "count": "100+ Channels", 
         "videos": [
-            "https://files.catbox.moe/lbqulg.mp4", 
-            "https://files.catbox.moe/7sdo4a.mp4",
-            "https://files.catbox.moe/lbqulg.mp4",
-            "https://files.catbox.moe/7sdo4a.mp4",
-            "https://files.catbox.moe/lbqulg.mp4"
+            "BAACAgQAAxkDAAEFVYZqeoqFr_aAVbNd-wpU-Vt_DEk5FAACqiIAAg0yGVGoOgG8oC9uAT0E", 
+            "BAACAgQAAxkDAAEFVYdqeoqFD46_mznDIfV9COY_a59HJQACqyIAAg0yGVG1R6bJ5EEtNz0E",
+            "BAACAgQAAxkDAAEFVYhqeoqFK8zWe_4pf2gaBxTmcWCLyAACrCIAAg0yGVGVr81VZ5_mOD0E",
+            "BAACAgQAAxkDAAEFVYlqeoqF5AABrhVCdi4NSDUTdmS0ar4AAq0iAAINMhlRMF21IFL9wzc9BA",
+            "BAACAgQAAxkDAAEFVYpqeoqFyvhOnR4kM-2BJ0mokROEpQACriIAAg0yGVEiZ_6JYPdV4D0E"
         ]
     },
     "child": {
@@ -106,26 +106,28 @@ def start(message):
     active_users.add(chat_id)
     
     welcome_text = (
-        "🔥━━━━━━━━━━━━━━━━━━━🔥\n"
-         "🎉 𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐭𝐨 😋\n\n"
+        "🎉 𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐭𝐨 𝐕𝐢𝐫𝐚𝐥 𝐌𝐦𝐬 𝐁𝐨𝐭😋\n\n"
         "✨ 𝐆𝐞𝐭 𝐞𝐱𝐜𝐥𝐮𝐬𝐢𝐯𝐞 𝐚𝐜𝐜𝐞𝐬𝐬 𝐭𝐨 𝐩𝐫𝐞𝐦𝐢𝐮𝐦 𝐜𝐨𝐧𝐭𝐞𝐧𝐭\n"
-        "💰 𝐀𝐟𝐟𝐨𝐫𝐝𝐚𝐛𝐥𝐞 𝐩𝐥𝐚𝐧𝐬 𝐬𝐭𝐚𝐫𝐭𝐢𝐧𝐠 𝐚𝐭 𝐣𝐮𝐬𝐭 ₹6𝟗\n\n"
-        "🥵 𝐀𝐋𝐋 𝐓𝐘𝐏𝐄 𝐏𝐎𝐑𝐍 𝐕𝐈𝐃𝐄𝐎𝐒 𝐀𝐕𝐀𝐈𝐋𝐀𝐁𝐋𝐄 🥵\n\n"
-        "💦 𝐑𝐞𝐚𝐥 𝐈𝐧𝐝!𝐚𝐧 𝐃ē𝐬𝐢 𝐏𝟎𝐫𝐧 🫦 𝟓𝟎𝟎𝟎𝟎+ 𝐕!𝐝𝐞𝐨𝐬\n"
-        "🌝 ¢𝐡!𝐥𝐝 𝐏𝟎𝐫𝐧 𝐈𝐧𝐝!𝐚𝐧 ⚡️⚡️   𝟓𝟎𝟎𝟎𝟎+ 𝐕!𝐝𝐞𝐨𝐬💥\n"
-        "🥶 𝐌0𝐦 & 𝐒0𝐧 𝐕¡𝐝𝐞𝐨𝐬 😱    𝟓𝟎𝟎𝟎𝟎+ 𝐕!𝐝𝐞𝐨𝐬\n"
+        "💰 𝐀𝐟𝐟𝐨𝐫𝐝𝐚𝐛𝐥𝐞 𝐩𝐥𝐚𝐧𝐬 𝐬𝐭𝐚𝐫𝐭𝐢𝐧𝐠 𝐚𝐭 𝐣𝐮𝐬𝐭 ₹𝟑𝟗\n\n"
+        "🥵𝐀𝐋𝐋 𝐓𝐘𝐏𝐄 𝐏𝟎𝐑𝐍 𝐕𝐈𝐃𝐄𝐎𝐒 𝐀𝐕𝐀𝐈𝐋𝐀𝐁𝐋𝐄 🥵\n\n"
+        "💦 𝐑𝐞𝐚𝐥 𝐈𝐧𝐝!𝐚𝐧 𝐃ē𝐬𝐢 𝐏𝟎𝐫𝐧 🫦 𝟓𝟎𝟎𝟎𝟎+ 𝐕!𝐝𝐞𝐨𝐬\n\n"
+        "🌝 ¢𝐡!𝐥𝐝 𝐏𝟎𝐫𝐧 𝐈𝐧𝐝!𝐚𝐧 ⚡️⚡️   𝟓𝟎𝟎𝟎𝟎+ 𝐕!𝐝𝐞𝐨𝐬\n\n"
+        "🥶 𝐌0𝐦 & 𝐒0𝐧 𝐕¡𝐝𝐞𝐨𝐬 😱     𝟓𝟎𝟎𝟎𝟎+ 𝐕!𝐝𝐞𝐨𝐬\n\n"
         "💀 𝐑@𝐩€ 𝐜@𝐬𝐞 𝐢𝐧𝐝¡𝐚𝐧 💢🌚   𝟓𝟎𝟎𝟎𝟎+ 𝐕!𝐝𝐞𝐨𝐬\n\n"
-        "🚀 𝐓𝐨𝐭𝐚𝐥 𝟏𝟎𝟎𝟎𝟎𝟎𝟎 𝐕!𝐝𝐞𝐨𝐬 𝐒𝐭0𝐜𝐤 ✅\n"
-        "🚀 𝐕𝐚𝐥𝐢𝐝𝐢𝐭𝐲 :- 𝐋𝐢𝐟𝐞𝐭𝐢𝐦𝐞 ✅\n\n"
-        "👇 𝐂𝐇𝐎𝐎𝐒𝐄 𝐀 𝐏𝐋𝐀𝐍 👇"
+        "🎉 𝟓𝟎𝟎𝟎𝟎+ 𝐕𝐢𝐫𝐚𝐥 𝐕𝐢𝐝𝐞𝐨𝐬 𝐀𝐯𝐚𝐢𝐥𝐚𝐛𝐥𝐞✨\n\n"
+        "🎉 𝐈𝐧$𝐭𝐚𝐠𝐫𝐚𝐦 𝐂𝐫𝐞𝐚𝐭𝐨𝐫𝐬 𝐌𝐦$ 𝐋𝐞@𝐤𝐞𝐝 ✨\n\n"
+        "🚀 𝐓𝐨𝐭𝐚𝐥 𝟏𝟎𝟎𝟎𝟎𝟎𝟎 𝐕!𝐝𝐞𝐨𝐬 𝐒𝐭0𝐜𝐤 ✅\n\n"
+        "🚀 𝗩𝗮𝗹𝗶𝗱𝗶𝘁𝘆 :- 𝗟𝗶𝗳𝗲𝘁𝗶𝗺𝗲 ✅\n\n"
+        "👇 **CHOOSE YOUR PLAN BELOW TO START** 👇"
     )
+    
     markup = InlineKeyboardMarkup(row_width=1)
     for key, cat in CATEGORIES.items():
-        markup.add(InlineKeyboardButton(f"{cat['name']} — ₹{cat['price']} / {cat['days']}", callback_data=f"buy_{key}", style="primary"))
+        markup.add(InlineKeyboardButton(f"{cat['name']} — ₹{cat['price']} / {cat['days']}", callback_data=f"buy_{key}"))
     
     markup.add(
-        InlineKeyboardButton("📖 How to Use", callback_data="how_to", style="primary"),
-        InlineKeyboardButton("🚨 Report Issue", callback_data="report", style="primary")
+        InlineKeyboardButton("📖 How to Use", callback_data="how_to"),
+        InlineKeyboardButton("🚨 Report Issue", callback_data="report")
     )
     
     bot.send_photo(chat_id, photo=BANNER_URL, caption=welcome_text, reply_markup=markup, parse_mode="Markdown")
@@ -139,7 +141,7 @@ def broadcast_command(message):
 def send_broadcast_to_all(message):
     success, fail = 0, 0
     markup = InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton("🔥 Buy Now / Open Bot", url=f"https://t.me/{BOT_USERNAME}", style="primary"))
+    markup.add(InlineKeyboardButton("🔥 Buy Now / Open Bot", url=f"https://t.me/{BOT_USERNAME}"))
     
     for chat_id in active_users:
         try:
@@ -160,6 +162,11 @@ def handle_callback(call):
     chat_id = call.message.chat.id
     data_id = call.data
     
+    try:
+        bot.answer_callback_query(call.id)
+    except:
+        pass
+    
     if data_id.startswith("buy_"):
         key = data_id.split("_")[1]
         data = CATEGORIES[key]
@@ -175,7 +182,7 @@ def handle_callback(call):
         qr = qrcode.make(f"upi://pay?pa={UPI_ID}&am={data['price']}&cu=INR")
         bio = BytesIO(); qr.save(bio, "PNG"); bio.seek(0)
         markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton("✅ I Have Paid", callback_data="ask_proof", style="success"))
+        markup.add(InlineKeyboardButton("✅ I Have Paid", callback_data="ask_proof"))
         bot.send_photo(chat_id, photo=bio, caption=f"💳 **PAYMENT BILL**\n\n📂 Category: {data['name']}\n💰 Amount: ₹{data['price']}\n\n✅ Pay करके नीचे 'I Have Paid' बटन दबाएं और स्क्रीनशॉट भेजें।", reply_markup=markup, parse_mode="Markdown")
         
     elif data_id == "ask_proof":
@@ -205,13 +212,14 @@ def handle_photo(message):
         user = message.from_user
         markup = InlineKeyboardMarkup(row_width=2)
         markup.add(
-            InlineKeyboardButton("✅ Approve", callback_data=f"approve_{user.id}", style="success"),
-            InlineKeyboardButton("❌ Reject", callback_data=f"reject_{user.id}", style="danger")
+            InlineKeyboardButton("✅ Approve", callback_data=f"approve_{user.id}"),
+            InlineKeyboardButton("❌ Reject", callback_data=f"reject_{user.id}")
         )
         bot.send_photo(ADMIN_ID, photo=message.photo[-1].file_id, caption=f"👤 User Proof from @{user.username or user.first_name} (ID: {user.id})", reply_markup=markup)
         bot.reply_to(message, "✅ आपका पेमेंट प्रूफ एडमिन के पास भेज दिया गया है। कृपया इंतज़ार करें।")
         user_states[chat_id] = False
 
 if __name__ == "__main__":
-    print("Bot is running with full broadcast features...")
+    print("Bot is running perfectly...")
     bot.infinity_polling(skip_pending=True)
+    
