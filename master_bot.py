@@ -11,8 +11,9 @@ TOKEN = "8715411517:AAECPXrzK4FHqzkmyrgsChtHylvm3GYS8IM"
 UPI_ID = "Q691189350@ybl"
 ADMIN_ID = 8999416691 
 BANNER_URL = "https://pic-link-bot.lovable.app/i/telegram-1779454035738-e9821961.jpg"
+QR_IMAGE_URL = "https://files.catbox.moe/lm2mr2.jpg"  # <--- यहाँ तेरा QR लिंक सेट हो गया
 PREMIUM_LINK = "https://t.me/+WdmuQrQCWHgxNjdh"
-BOT_USERNAME = "Premiumpaiddd_bot?start"
+BOT_USERNAME = "Pompobhgmbot_bot"
 
 bot = telebot.TeleBot(TOKEN)
 
