@@ -13,7 +13,7 @@ UPI_ID = "Q691189350@ybl"
 ADMIN_ID = 8999416691 
 BANNER_URL = "https://pic-link-bot.lovable.app/i/telegram-1779454035738-e9821961.jpg"
 PREMIUM_LINK = "https://t.me/+WdmuQrQCWHgxNjdh"
-BOT_USERNAME = "Premiumpaiddd_bot" # बिना @ के यूजरनेम
+BOT_USERNAME = "VIDEO_GROUP_PURCHASE" # बिना @ के यूजरनेम
 
 bot = telebot.TeleBot(TOKEN)
 
