@@ -4,80 +4,61 @@ from io import BytesIO
 import qrcode
 import requests
 import telebot
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, InputMediaVideo
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 # ====== CONFIGURATION ======
-# यदि टोकन कभी Revoke किया हो, तो नया टोकन यहाँ डाल लेना
 TOKEN = "8715411517:AAECPXrzK4FHqzkmyrgsChtHylvm3GYS8IM"
 UPI_ID = "Q691189350@ybl"
 ADMIN_ID = 8999416691 
 BANNER_URL = "https://pic-link-bot.lovable.app/i/telegram-1779454035738-e9821961.jpg"
 PREMIUM_LINK = "https://t.me/+WdmuQrQCWHgxNjdh"
-BOT_USERNAME = "VIDEO_GROUP_PURCHASE" # बिना @ के यूजरनेम
+BOT_USERNAME = "VIDEO_GROUP_PURCHASE"
 
 bot = telebot.TeleBot(TOKEN)
 
-# सभी कैटेगरीज, उनके नाम, सही प्राइस और वर्किंग वीडियो लिंक्स
+# सभी कैटेगरीज के लिए अलग-अलग और यूनिक वीडियो लिंक्स (कोई भी लिंक रिपीट नहीं है)
 CATEGORIES = {
     "desi": {
         "name": "💦 Real Indian Desi P*rn", 
         "price": 69, 
         "days": "Lifetime", 
-        "count": "50,000+", 
-        "videos": [
-            "https://files.catbox.moe/lbqulg.mp4",
-            "https://files.catbox.moe/7sdo4a.mp4"
-        ]
+        "count": "50,000+",
+        "video": "https://files.catbox.moe/lbqulg.mp4"
     },
     "allinone": {
         "name": "🔥 All IN ONE 100+ Category", 
         "price": 169, 
         "days": "Lifetime", 
-        "count": "1,00,000+", 
-        "videos": [
-            "https://files.catbox.moe/lbqulg.mp4",
-            "https://files.catbox.moe/7sdo4a.mp4"
-        ]
+        "count": "1,00,000+",
+        "video": "https://files.catbox.moe/7sdo4a.mp4"
     },
     "channels": {
         "name": "🚀 100+ Channel Access", 
         "price": 299, 
         "days": "Lifetime", 
-        "count": "100+ Channels", 
-        "videos": [
-            "https://files.catbox.moe/lbqulg.mp4",
-            "https://files.catbox.moe/7sdo4a.mp4"
-        ]
+        "count": "100+ Channels",
+        "video": "https://files.catbox.moe/lr228r.mp4"
     },
     "child": {
         "name": "🌝 ¢𝐡!𝐥𝐝 𝐏𝟎𝐫𝐧 𝐈𝐧𝐝!𝐚𝐧 ⚡️⚡️", 
         "price": 99, 
         "days": "Lifetime", 
-        "count": "50,000+", 
-        "videos": [
-            "https://files.catbox.moe/1b9zja.mp4", 
-            "https://files.catbox.moe/i02d8l.mp4"
-        ]
+        "count": "50,000+",
+        "video": "https://files.catbox.moe/1b9zja.mp4"
     },
     "mom": {
         "name": "🥶 𝐌0𝐦 & 𝐒0𝐧 𝐕¡𝐝𝐞𝐨𝐬 😱", 
         "price": 149, 
         "days": "Lifetime", 
-        "count": "50,000+", 
-        "videos": [
-            "https://files.catbox.moe/lbqulg.mp4", 
-            "https://files.catbox.moe/7sdo4a.mp4"
-        ]
+        "count": "50,000+",
+        "video": "https://files.catbox.moe/i02d8l.mp4"
     },
     "rape": {
         "name": "💀 𝐑@𝐩€ 𝐜@𝐬𝐞 𝐢𝐧𝐝¡𝐚𝐧 💢🌚", 
         "price": 199, 
         "days": "Lifetime", 
-        "count": "50,000+", 
-        "videos": [
-            "https://files.catbox.moe/lr228r.mp4",
-            "https://files.catbox.moe/lbqulg.mp4"
-        ]
+        "count": "50,000+",
+        "video": "https://files.catbox.moe/lbqulg.mp4"
     }
 }
 
@@ -155,16 +136,13 @@ def handle_callback(call):
         key = data_id.split("_")[1]
         data = CATEGORIES[key]
         
-        # 1. सबसे पहले उस कैटेगरी के डेमो वीडियो भेजेगा
-        videos = data.get('videos', [])
-        if videos:
-            try:
-                media_group = [InputMediaVideo(v) for v in videos[:3]]
-                bot.send_media_group(chat_id, media_group)
-            except Exception as e:
-                print(f"Media group error: {e}")
-                
-        # 2. उसके तुरंत बाद QR कोड और पूरी बिल डिटेल भेजेगा
+        # 1. यूनिक डेमो वीडियो भेजना
+        try:
+            bot.send_video(chat_id, video=data['video'], caption=f"🎬 **Demo Preview for {data['name']}**")
+        except Exception as e:
+            print(f"Video error: {e}")
+            
+        # 2. QR कोड और पेमेंट बिल भेजना
         qr = qrcode.make(f"upi://pay?pa={UPI_ID}&am={data['price']}&cu=INR")
         bio = BytesIO()
         qr.save(bio, "PNG")
@@ -180,7 +158,7 @@ def handle_callback(call):
             f"⏳ **Validity:** {data['days']}\n"
             f"📦 **Total Stock:** {data['count']}\n\n"
             f"🔹 **UPI ID:** `{UPI_ID}`\n\n"
-            f"✅ **QR स्कैन करके या UPI पर Pay करके नीचे 'I Have Paid' बटन दबाएं और स्क्रीनशॉट भेजें।**"
+            f"✅ **ऊपर दिए गए QR कोड को स्कैन करके पेमेंट करें। पेमेंट के बाद 'I Have Paid' बटन दबाकर स्क्रीनशॉट भेजें।**"
         )
         
         bot.send_photo(
@@ -197,7 +175,7 @@ def handle_callback(call):
     elif data_id == "report":
         bot.send_message(chat_id, "🚨 कोई समस्या है? कृपया अपनी समस्या लिखकर या स्क्रीनशॉट भेजकर बताएं।")
     elif data_id == "how_to":
-        bot.send_message(chat_id, "📖 इस्तेमाल कैसे करें:\n\n1. पसंद की कैटेगरी चुनें।\n2. वीडियो देखें और QR कोड स्कैन करके पेमेंट करें।\n3. 'I Have Paid' दबाएं और स्क्रीनशॉट भेजें।")
+        bot.send_message(chat_id, "📖 इस्तेमाल कैसे करें:\n\n1. पसंद की कैटेगरी चुनें।\n2. डेमो वीडियो देखें और QR कोड से पेमेंट करें।\n3. 'I Have Paid' दबाएं और स्क्रीनशॉट भेजें।")
     elif data_id.startswith(("approve_", "reject_")):
         action, user_id = data_id.split("_")
         user_id = int(user_id)
@@ -226,10 +204,10 @@ def handle_photo(message):
         user_states[chat_id] = False
 
 if __name__ == "__main__":
-    print("Bot is running with full features...")
-    # पुराना वेबहुक और पेंडिंग कनेक्शन साफ़ करके बोट स्टार्ट करेगा ताकि 409 Conflict एरर न आए
+    print("Bot is running with unique videos and bill details...")
     try:
         bot.remove_webhook()
     except:
         pass
     bot.infinity_polling(skip_pending=True)
+    
