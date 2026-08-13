@@ -4,7 +4,7 @@ from io import BytesIO
 import qrcode
 import requests
 import telebot
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, InputMediaVideo
 
 # ====== CONFIGURATION ======
 TOKEN = "8715411517:AAECPXrzK4FHqzkmyrgsChtHylvm3GYS8IM"
@@ -16,49 +16,79 @@ BOT_USERNAME = "VIDEO_GROUP_PURCHASE"
 
 bot = telebot.TeleBot(TOKEN)
 
-# सभी कैटेगरीज के लिए अलग-अलग और यूनिक वीडियो लिंक्स (कोई भी लिंक रिपीट नहीं है)
+# हर कैटेगरी में पूरे 4 यूनिक वीडियो, सही प्राइस, स्टॉक और लाइफटाइम एक्सेस डिटेल्स
 CATEGORIES = {
     "desi": {
         "name": "💦 Real Indian Desi P*rn", 
         "price": 69, 
-        "days": "Lifetime", 
-        "count": "50,000+",
-        "video": "https://files.catbox.moe/lbqulg.mp4"
+        "days": "Lifetime Access", 
+        "count": "50,000+ Videos", 
+        "videos": [
+            "https://files.catbox.moe/lbqulg.mp4",
+            "https://files.catbox.moe/7sdo4a.mp4",
+            "https://files.catbox.moe/1b9zja.mp4",
+            "https://files.catbox.moe/i02d8l.mp4"
+        ]
     },
     "allinone": {
         "name": "🔥 All IN ONE 100+ Category", 
         "price": 169, 
-        "days": "Lifetime", 
-        "count": "1,00,000+",
-        "video": "https://files.catbox.moe/7sdo4a.mp4"
+        "days": "Lifetime Access", 
+        "count": "1,00,000+ Videos", 
+        "videos": [
+            "https://files.catbox.moe/7sdo4a.mp4",
+            "https://files.catbox.moe/lr228r.mp4",
+            "https://files.catbox.moe/lbqulg.mp4",
+            "https://files.catbox.moe/1b9zja.mp4"
+        ]
     },
     "channels": {
         "name": "🚀 100+ Channel Access", 
         "price": 299, 
-        "days": "Lifetime", 
-        "count": "100+ Channels",
-        "video": "https://files.catbox.moe/lr228r.mp4"
+        "days": "Lifetime Access", 
+        "count": "100+ VIP Channels", 
+        "videos": [
+            "https://files.catbox.moe/lr228r.mp4",
+            "https://files.catbox.moe/i02d8l.mp4",
+            "https://files.catbox.moe/7sdo4a.mp4",
+            "https://files.catbox.moe/lbqulg.mp4"
+        ]
     },
     "child": {
         "name": "🌝 ¢𝐡!𝐥𝐝 𝐏𝟎𝐫𝐧 𝐈𝐧𝐝!𝐚𝐧 ⚡️⚡️", 
         "price": 99, 
-        "days": "Lifetime", 
-        "count": "50,000+",
-        "video": "https://files.catbox.moe/1b9zja.mp4"
+        "days": "Lifetime Access", 
+        "count": "50,000+ Videos", 
+        "videos": [
+            "https://files.catbox.moe/1b9zja.mp4", 
+            "https://files.catbox.moe/i02d8l.mp4",
+            "https://files.catbox.moe/lbqulg.mp4",
+            "https://files.catbox.moe/7sdo4a.mp4"
+        ]
     },
     "mom": {
         "name": "🥶 𝐌0𝐦 & 𝐒0𝐧 𝐕¡𝐝𝐞𝐨𝐬 😱", 
         "price": 149, 
-        "days": "Lifetime", 
-        "count": "50,000+",
-        "video": "https://files.catbox.moe/i02d8l.mp4"
+        "days": "Lifetime Access", 
+        "count": "50,000+ Videos", 
+        "videos": [
+            "https://files.catbox.moe/i02d8l.mp4",
+            "https://files.catbox.moe/lbqulg.mp4",
+            "https://files.catbox.moe/lr228r.mp4",
+            "https://files.catbox.moe/1b9zja.mp4"
+        ]
     },
     "rape": {
         "name": "💀 𝐑@𝐩€ 𝐜@𝐬𝐞 𝐢𝐧𝐝¡𝐚𝐧 💢🌚", 
         "price": 199, 
-        "days": "Lifetime", 
-        "count": "50,000+",
-        "video": "https://files.catbox.moe/lbqulg.mp4"
+        "days": "Lifetime Access", 
+        "count": "50,000+ Videos", 
+        "videos": [
+            "https://files.catbox.moe/lr228r.mp4",
+            "https://files.catbox.moe/7sdo4a.mp4",
+            "https://files.catbox.moe/i02d8l.mp4",
+            "https://files.catbox.moe/lbqulg.mp4"
+        ]
     }
 }
 
@@ -88,7 +118,7 @@ def start(message):
     
     markup = InlineKeyboardMarkup(row_width=1)
     for key, cat in CATEGORIES.items():
-        markup.add(InlineKeyboardButton(f"{cat['name']} — ₹{cat['price']} / {cat['days']}", callback_data=f"buy_{key}", style="primary"))
+        markup.add(InlineKeyboardButton(f"{cat['name']} — ₹{cat['price']} / Lifetime", callback_data=f"buy_{key}", style="primary"))
     
     markup.add(
         InlineKeyboardButton("📖 How to Use", callback_data="how_to", style="primary"),
@@ -136,13 +166,16 @@ def handle_callback(call):
         key = data_id.split("_")[1]
         data = CATEGORIES[key]
         
-        # 1. यूनिक डेमो वीडियो भेजना
-        try:
-            bot.send_video(chat_id, video=data['video'], caption=f"🎬 **Demo Preview for {data['name']}**")
-        except Exception as e:
-            print(f"Video error: {e}")
-            
-        # 2. QR कोड और पेमेंट बिल भेजना
+        # 1. पहले चारों वीडियो का मीडिया ग्रुप एक साथ भेजेगा
+        videos = data.get('videos', [])
+        if videos:
+            try:
+                media_group = [InputMediaVideo(v) for v in videos[:4]]
+                bot.send_media_group(chat_id, media_group)
+            except Exception as e:
+                print(f"Media group error: {e}")
+                
+        # 2. उसके तुरंत बाद शानदार बिल और QR कोड भेजेगा
         qr = qrcode.make(f"upi://pay?pa={UPI_ID}&am={data['price']}&cu=INR")
         bio = BytesIO()
         qr.save(bio, "PNG")
@@ -152,13 +185,13 @@ def handle_callback(call):
         markup.add(InlineKeyboardButton("✅ I Have Paid", callback_data="ask_proof", style="success"))
         
         bill_caption = (
-            f"💳 **PAYMENT BILL & DETAILS**\n\n"
+            f"🔥 **VIP MEMBERSHIP BILL & DETAILS** 🔥\n\n"
             f"📂 **Category:** {data['name']}\n"
-            f"💰 **Amount:** ₹{data['price']}\n"
-            f"⏳ **Validity:** {data['days']}\n"
+            f"💰 **Price:** ₹{data['price']} Only\n"
+            f"⏳ **Validity:** {data['days']} (जीवन भर का मज़ा)\n"
             f"📦 **Total Stock:** {data['count']}\n\n"
             f"🔹 **UPI ID:** `{UPI_ID}`\n\n"
-            f"✅ **ऊपर दिए गए QR कोड को स्कैन करके पेमेंट करें। पेमेंट के बाद 'I Have Paid' बटन दबाकर स्क्रीनशॉट भेजें।**"
+            f"⚡️ **ऊपर दिए गए QR कोड को स्कैन करके पेमेंट करें। पेमेंट सफल होने के बाद नीचे 'I Have Paid' बटन दबाकर तुरंत स्क्रीनशॉट भेजें!**"
         )
         
         bot.send_photo(
@@ -170,17 +203,17 @@ def handle_callback(call):
         )
         
     elif data_id == "ask_proof":
-        bot.send_message(chat_id, "📸 कृपया अपना पेमेंट स्क्रीनशॉट यहाँ भेजें ताकि एडमिन अप्रूव कर सके।")
+        bot.send_message(chat_id, "📸 कृपया अपना पेमेंट स्क्रीनशॉट यहाँ भेजें ताकि एडमिन तुरंत चेक करके अप्रूव कर सके।")
         user_states[chat_id] = True
     elif data_id == "report":
         bot.send_message(chat_id, "🚨 कोई समस्या है? कृपया अपनी समस्या लिखकर या स्क्रीनशॉट भेजकर बताएं।")
     elif data_id == "how_to":
-        bot.send_message(chat_id, "📖 इस्तेमाल कैसे करें:\n\n1. पसंद की कैटेगरी चुनें।\n2. डेमो वीडियो देखें और QR कोड से पेमेंट करें।\n3. 'I Have Paid' दबाएं और स्क्रीनशॉट भेजें।")
+        bot.send_message(chat_id, "📖 इस्तेमाल कैसे करें:\n\n1. पसंद की कैटेगरी चुनें।\n2. चारों डेमो वीडियो देखें।\n3. QR कोड स्कैन करके पेमेंट करें और 'I Have Paid' दबाकर स्क्रीनशॉट भेजें।")
     elif data_id.startswith(("approve_", "reject_")):
         action, user_id = data_id.split("_")
         user_id = int(user_id)
         if action == "approve": 
-            bot.send_message(user_id, f"🎉 Payment Approved! Your Access Link: {PREMIUM_LINK}")
+            bot.send_message(user_id, f"🎉 Payment Approved! Your Lifetime Access Link: {PREMIUM_LINK}")
         else: 
             bot.send_message(user_id, "❌ Payment Rejected. Please contact support.")
         try:
@@ -204,7 +237,7 @@ def handle_photo(message):
         user_states[chat_id] = False
 
 if __name__ == "__main__":
-    print("Bot is running with unique videos and bill details...")
+    print("Bot is running with 4 videos group + QR bill feature...")
     try:
         bot.remove_webhook()
     except:
